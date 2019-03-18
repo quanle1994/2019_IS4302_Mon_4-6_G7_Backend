@@ -1,0 +1,23 @@
+{
+  "name": "goldchain",
+  "version": "1.0.0",
+  "description": "Blockchain application on Gold Trading",
+  "main": "app.js",
+  "scripts": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/quanle1994/IS4302-GoldChain.git"
+  },
+  "author": "Quan Le",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/quanle1994/IS4302-GoldChain/issues"
+  },
+  "homepage": "https://github.com/quanle1994/IS4302-GoldChain#readme",
+  "dependencies": {
+    "express": "^4.16.4",
+    "jsonwebtoken": "^8.5.0"
+  }
+}
