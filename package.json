@@ -4,6 +4,7 @@
   "description": "Blockchain application on Gold Trading",
   "main": "app.js",
   "scripts": {
+    "start": "babel-node ./server/app.js",
     "test": "test"
   },
   "repository": {
@@ -17,7 +18,18 @@
   },
   "homepage": "https://github.com/quanle1994/IS4302-GoldChain#readme",
   "dependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-polyfill": "^6.26.0",
+    "babel-preset-env": "^1.7.0",
+    "body-parser": "^1.18.3",
+    "dotenv": "^6.0.0",
     "express": "^4.16.4",
+    "express-http-proxy": "^1.5.1",
     "jsonwebtoken": "^8.5.0"
+  },
+  "babel": {
+    "presets": [
+      "env"
+    ]
   }
 }
