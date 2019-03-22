@@ -9,6 +9,6 @@ var app = new express();
 app.use(express.static('static'))
 app.use('hlf', proxy('localhost:3001/'))
 
-app.listen(process.env.NODE_PORT, () => {
+app.listen(process.env.NODE_PORT, '0.0.0.0', () => {
     console.log(`Server started on port: ${process.env.NODE_PORT}`)
 });
