@@ -1,3 +1,7 @@
+import {userRouter} from "./routers/userRoutes";
+import bodyParser from 'body-parser';
+import {adminRouter} from "./routers/adminRoutes";
+
 require('dotenv').load();
 
 const express = require('express');
@@ -20,11 +24,13 @@ const upload = multer({
     storage: storage,
 });
 app.use(express.static('static'));
+app.use(bodyParser.json());
 app.use('hlf', proxy('localhost:3001/'));
 app.use('alf', proxy('localhost:3002/'));
 app.use('blf', proxy('localhost:3003/'));
 app.use('clf', proxy('localhost:3004/'));
-
+app.use('/user', userRouter);
+app.use('/admin', adminRouter);
 app.get('/getPhoto', (req, res) => {
     res.sendFile(process.env.PHOTO_DIR + '/test.jpg');
 });
