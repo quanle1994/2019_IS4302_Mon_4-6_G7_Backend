@@ -1,5 +1,5 @@
 import * as jwt from "jsonwebtoken";
-import {poheng} from "../models/fakeModels";
+import {deeds, golds, poheng} from "../models/fakeModels";
 
 require('dotenv').load();
 
@@ -21,8 +21,13 @@ const signInUser = async (req, res) => {
 
 const getAllAssets = async (req, res) => {
   const { username } = req.user;
-  if (username === 'poheng@gmail.com')
-    return res.status(200).send(poheng.assets)
+  let resdata = {};
+  if (username === 'poheng@gmail.com') {
+    resdata = JSON.parse(JSON.stringify(poheng.assets));
+    resdata.golds.balance = poheng.assets.golds.balance.map(id => golds[id]);
+    resdata.deeds.balance = poheng.assets.deeds.balance.map(id => deeds[id]);
+  }
+  return res.status(200).send(resdata);
 };
 
 const generateAuthToken = async function (user) {

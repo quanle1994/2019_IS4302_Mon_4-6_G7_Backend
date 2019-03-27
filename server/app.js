@@ -1,6 +1,7 @@
 import {userRouter} from "./routers/userRoutes";
 import bodyParser from 'body-parser';
 import {adminRouter} from "./routers/adminRoutes";
+import {listingRouter} from "./routers/listingRoutes";
 
 require('dotenv').load();
 
@@ -31,6 +32,7 @@ app.use('blf', proxy('localhost:3003/'));
 app.use('clf', proxy('localhost:3004/'));
 app.use('/user', userRouter);
 app.use('/admin', adminRouter);
+app.use('/listings', listingRouter);
 app.get('/getPhoto', (req, res) => {
     res.sendFile(process.env.PHOTO_DIR + '/test.jpg');
 });
