@@ -1,19 +1,61 @@
+import {getCaById, getDeedById, getGoldById, getMinerById, getUserById} from "../composer/api";
+
 require('dotenv').load();
 import jwt from 'jsonwebtoken';
+import {getDetailsOfGold} from "../controllers/userController";
+const crypto = require('crypto');
+const hash = (pwd) => crypto.createHash('sha256').update(pwd).digest('base64');
 
 const verifyPassword = async (req, res, next) => {
   const {username, password} = req.body;
 
   try {
-    // req.user = await User.findByUsername(username, password);
-    if (!stub(username)) {
-      console.log(`User ${username} not authorised`);
-      res.status(401).send({message: 'Unauthorised User'});
+    let returnedUser = undefined;
+    let type = '';
+    const admin = stub(username, password);
+    if (admin !== undefined) {
+      req.user = {
+        username,
+        name: admin.name,
+        type: 'ADMIN',
+      };
+      return next();
+    }
+    await getMinerById(username).then(res => {
+      returnedUser = res.data;
+      type = 'Miner';
+    })
+      .catch(async err => {
+      if (err.response.data.error.statusCode === 404) {
+        await getCaById(username).then(res => {
+          returnedUser = res.data;
+          type = 'CertificateAuthority';
+        })
+          .catch(async err => {
+          if (err.response.data.error.statusCode === 404) {
+            await getUserById(username).then(res => {
+              returnedUser = res.data;
+              type = 'RegisteredUser';
+            });
+          } else {
+            console.log(err.response.data.error);
+          }
+        });
+      }else {
+        console.log(err.response.data.error);
+      }
+    });
+    const hashedPassword = hash(`${username}-${password}`);
+    if (returnedUser === undefined || hashedPassword !== returnedUser.password) {
+      console.log(`Wrong Credentials`);
+      res.status(401).send({message: 'Wrong Credentials'});
       return;
     }
     req.user = {
       username,
-      type: username === users[0] ? 'ADMIN' : username === users[1] ? 'COMMERCIAL' : username === users[2] ? 'CA' : 'MINER',
+      name: returnedUser === undefined ? null : returnedUser.name,
+      type: type !== '' ? type : 'UNKNOWN',
+      money: returnedUser.cash === undefined ? null : returnedUser.cash,
     };
     next();
   } catch (e) {
@@ -22,9 +64,16 @@ const verifyPassword = async (req, res, next) => {
   }
 };
 
-const users = ['quanle@gmail.com', 'alice@gmail.com', 'poheng@gmail.com', 'miner@gmail.com'];
+const admin = {
+  username: 'quanle',
+  name: 'LE QUANG QUAN',
+  password: 'ERuTWjXkczZA68YTKOaAe5sSiuKF4SbCZPG8kyG5o2M=',
+};
 
-const stub = (username) => users.indexOf(username) >= 0;
+const stub = (username, password) => {
+  if (admin.username === username && hash(`${admin.username}-${password}`) === admin.password) return admin;
+  else return undefined;
+};
 
 const verifyToken = async (req, res, next) => {
   const token = req.header('x-auth');
@@ -46,7 +95,39 @@ const verifyToken = async (req, res, next) => {
   }
 };
 
+const verifyGold = async (req, res, next) => {
+  const { goldId } = req.body;
+  try {
+    const gold = await getDetailsOfGold(goldId);
+    if (gold === undefined) throw Error('Gold not found');
+    req.gold = gold;
+    next();
+  } catch (e) {
+    console.log(e);
+    return res.status(401).send({message: 'Gold not found'});
+  }
+};
+
+const verifyDeed = async (req, res, next) => {
+  const { deedId } = req.body;
+  try {
+    const deed = await getDeedById(deedId).catch(e => {
+      console.log(e);
+      return undefined;
+    });
+    if (deed === undefined) throw Error('Deed not found');
+    req.deed = deed.data;
+    return next();
+  } catch (e) {
+    console.log(e);
+    return res.status(401).send({message: 'Deed not found'});
+  }
+};
+
 module.exports = {
   verifyPassword,
-  verifyToken
+  verifyToken,
+  verifyGold,
+  verifyDeed,
+  hash,
 };

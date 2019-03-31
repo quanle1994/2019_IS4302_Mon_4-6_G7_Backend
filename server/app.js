@@ -4,7 +4,6 @@ import {adminRouter} from "./routers/adminRoutes";
 import {listingRouter} from "./routers/listingRoutes";
 
 require('dotenv').load();
-
 const express = require('express');
 const proxy = require('express-http-proxy');
 const jwt = require('jsonwebtoken');
@@ -26,10 +25,11 @@ const upload = multer({
 });
 app.use(express.static('static'));
 app.use(bodyParser.json());
-app.use('hlf', proxy('localhost:3001/'));
-app.use('alf', proxy('localhost:3002/'));
-app.use('blf', proxy('localhost:3003/'));
-app.use('clf', proxy('localhost:3004/'));
+// app.use('/hlf', proxy('http://172.31.65.194:3001/'));
+// app.use('/hlf', proxy('http://172.25.105.221:3001/'));
+// app.use('/hlf', proxy('http://172.25.101.84:3001/'));
+app.use('/hlf', proxy('http://25.56.89.13:3001/'));
+// app.use('/hlf', proxy('http://localhost:3001/'));
 app.use('/user', userRouter);
 app.use('/admin', adminRouter);
 app.use('/listings', listingRouter);

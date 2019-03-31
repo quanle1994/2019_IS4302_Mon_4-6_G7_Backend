@@ -6,6 +6,8 @@
   "scripts": {
     "start": "babel-node ./server/app.js",
     "addAdmin": "babel-node ./server/middleware/insertAdmin.js",
+    "init": "babel-node ./server/init/init.js",
+    "cleanup": "babel-node ./server/init/cleanup.js",
     "test": "test"
   },
   "repository": {
@@ -19,17 +21,20 @@
   },
   "homepage": "https://github.com/quanle1994/IS4302-GoldChain#readme",
   "dependencies": {
+    "axios": "^0.18.0",
     "babel-cli": "^6.26.0",
     "babel-polyfill": "^6.26.0",
     "babel-preset-env": "^1.7.0",
     "body-parser": "^1.18.3",
+    "crypto": "^1.0.1",
     "dotenv": "^6.0.0",
     "express": "^4.16.4",
     "express-http-proxy": "^1.5.1",
     "jsonwebtoken": "^8.5.0",
     "mongoose": "^5.4.19",
     "multer": "^1.4.1",
-    "randomstring": "^1.1.5"
+    "randomstring": "^1.1.5",
+    "uuid4": "^1.1.4"
   },
   "babel": {
     "presets": [
