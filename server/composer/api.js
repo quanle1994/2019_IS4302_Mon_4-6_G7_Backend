@@ -89,6 +89,23 @@ const getAllOffers = () => api
     '/queries/allOfferTx'
   );
 
+const getAllAcceptedOffers = () => api
+  .get(
+    '/queries/allAcceptOfferTx'
+  );
+
+const acceptOffer = (data) => api
+  .post(
+    '/org.acme.goldchain.AcceptOffer',
+    JSON.parse(JSON.stringify(data)),
+  );
+
+const delist = (data) => api
+  .post(
+    'org.acme.goldchain.Delist',
+    JSON.parse(JSON.stringify(data)),
+  );
+
 module.exports = {
   api,
   createMiner,
@@ -110,4 +127,7 @@ module.exports = {
   getAllDeedGolds,
   offer,
   getAllOffers,
+  getAllAcceptedOffers,
+  acceptOffer,
+  delist,
 };

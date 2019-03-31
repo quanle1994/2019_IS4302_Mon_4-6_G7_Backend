@@ -51,6 +51,9 @@ userRouter.route('/offerRequest')
 userRouter.route('/getMyOffers')
   .get(verifyToken, getMyOffers);
 
+userRouter.route('/getMyOffers/:userId')
+  .get(verifyToken, getMyOffers);
+
 module.exports = {
   userRouter
 };

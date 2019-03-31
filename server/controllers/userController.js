@@ -2,14 +2,14 @@ import * as jwt from "jsonwebtoken";
 import {
   api,
   createDeedCa,
-  createGold,
+  createGold, getAllAcceptedOffers,
   getAllCas,
   getAllDeedGolds,
   getAllMiners,
   getAllOffers,
   getCaById,
   getDeedById,
-  getGoldById,
+  getGoldById, getMinerById, getUserById,
   listDeed,
   offer
 } from '../composer/api';
@@ -124,6 +124,18 @@ const getDetailsOfCa = async (id) => {
   return ca;
 };
 
+const getDetailsOfMiner = async (id) => {
+  const res = await getMinerById(id).catch(e => {
+    console.log(e.response.data.error);
+    return undefined;
+  });
+  let ca = res.data;
+  delete ca.password;
+  delete ca.deedOwned;
+  delete ca.goldOwned;
+  return ca;
+};
+
 const getDetailsOfGold = async (id) => {
   const res = await getGoldById(id).catch(e => {
     console.log(e.response.data.error);
@@ -131,9 +143,11 @@ const getDetailsOfGold = async (id) => {
   });
   const gold = res.data;
   const ca = await getDetailsOfCa(gold.verifiedBy.split('#')[1]);
+  const miner = await getDetailsOfMiner(gold.miner.split('#')[1]);
   if (ca === undefined) return undefined;
   gold.verifiedBy = ca;
   gold.ca = ca.name;
+  gold.minerInfo = miner;
   return gold;
 };
 
@@ -233,22 +247,60 @@ const postOfferRequest = async (req, res) => {
 
 const getMyOffers = async (req, res) => {
   try {
-    const { user } = req;
+    const { user, params } = req;
+    const { userId } = params;
     const r = await getAllOffers();
-    const myOffers = r.data.filter(r => r.buyerId.endsWith(`#${user.username}`));
+    const r2 = await getAllAcceptedOffers();
+    const myOffers = userId === undefined ? r.data.filter(r => r.buyerId.endsWith(`#${user.username}`)) : r.data;
     const p = myOffers.map(async o => {
       try {
-        const r2 = await getDeedById(o.deedToBuy.split('#')[1]);
-        o.deedToBuy = await getDetailsOfDeed(r2.data);
+        const r4 = await getDeedById(o.deedToBuy.split('#')[1]);
+        o.deedToBuy = await getDetailsOfDeed(r4.data);
+        const r3 = await getUserById(o.buyerId.split('#')[1]);
+        delete r3.data.password;
+        delete r3.data.deedOwned;
+        delete r3.data.goldOwned;
+        o.buyer = r3.data;
         return o;
+
       } catch (e) {
         console.log(e);
         return undefined;
       }
     });
-    return await Promise.all(p).then(offers => res.status(200).send(offers));
+    const q = r2.data.map(async o => {
+      try {
+        const r3 = await getDeedById(o.deedToBuy.split('#')[1]);
+        o.deedToBuy = await getDetailsOfDeed(r3.data);
+        return o;
+
+      } catch (e) {
+        console.log(e);
+        return undefined;
+      }
+    });
+    return await Promise.all(p).then(async offers => {
+      return await Promise.all(q).then(accepts => {
+        offers = offers.filter(o => o.deedToBuy.listingState === 'FOR_1TO1_SALE' || o.deedToBuy.currentOwner.userId === user.username);
+        offers = offers.map(o => {
+          let deedAccepted = accepts.filter(a => a.deedToBuy.deedId === o.deedToBuy.deedId);
+          let matched = accepts.filter(a => a.offerTxId === o.transactionId);
+          o.status = matched.length === 0 && deedAccepted.length > 0 ? 'REJECTED'
+            : matched.length > 0 && deedAccepted.length > 0 && o.buyer.userId === user.username ? 'ACCEPTED' : 'PENDING';
+          return o;
+        });
+
+        if (userId !== undefined) {
+          return res.status(200).send(offers.filter(o => {
+            let matched = accepts.filter(a => a.offerTxId === o.transactionId);
+            return o.deedToBuy.currentOwner.userId === userId;
+          }));
+        }
+        return res.status(200).send(offers);
+      });
+    });
   } catch (e) {
-    console.log(e.response.data.error);
+    console.log(e);
     return res.status(500).send({message: 'Failed to fetch offers'});
   }
 };

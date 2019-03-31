@@ -28,13 +28,13 @@ const createGold = (data) => api
     JSON.parse(JSON.stringify(data)),
   );
 
-const minerCreateGold = (data) = api
+const minerCreateGold = (data) => api
   .post(
     '/org.acme.goldchain.MinerCreateGold',
     JSON.parse(JSON.stringify(data)),
   );
 
-const CAGoldSaleRequest = (data) = api
+const CAGoldSaleRequest = (data) => api
   .post(
     '/org.acme.goldchain.CAGoldSaleRequest',
     JSON.parse(JSON.stringify(data)),
@@ -152,6 +152,8 @@ const cgd1 = {
 };
 
 const gold2Id = uuid4();
+const newGold1 = uuid4();
+const newGold2 = uuid4();
 
 const cgd2 = {
   "$class": "org.acme.goldchain.MinerCreateGold",
@@ -162,22 +164,38 @@ const cgd2 = {
   "miner": `resource:org.acme.goldchain.Miner#${minerId}`,
 };
 
-const gsr1 = {
+const cgr1 = {
   "$class": "org.acme.goldchain.CAGoldSaleRequest",
   "gold": `resource:org.acme.goldchain.Gold#${gold1Id}`,
   "minerId": `resource:org.acme.goldchain.Miner#${minerId}`,
   "goldWeight": 900,
-  "goldPurity": 99.9,
   "verificationState": "APPROVED",
 };
 
-const gsr2 = {
+const cgr2 = {
   "$class": "org.acme.goldchain.CAGoldSaleRequest",
   "gold": `resource:org.acme.goldchain.Gold#${gold2Id}`,
   "minerId": `resource:org.acme.goldchain.Miner#${minerId}`,
   "goldWeight": 800,
-  "goldPurity": 99,
   "verificationState": "APPROVED",
+};
+
+const msg1 = {
+  "$class": "org.acme.goldchain.MinerSellGoldToCA",
+  "oldGold": gold1Id,
+  "newGoldId": newGold1,
+  "newGoldWeight": 900,
+  "ca": `resource:org.acme.goldchain.CertificateAuthority#${pohengId}`,
+  "miner": `resource:org.acme.goldchain.Miner#${minerId}`,
+};
+
+const msg2 = {
+  "$class": "org.acme.goldchain.MinerSellGoldToCA",
+  "oldGold": gold2Id,
+  "newGoldId": newGold2,
+  "newGoldWeight": 800,
+  "ca": `resource:org.acme.goldchain.CertificateAuthority#${pohengId}`,
+  "miner": `resource:org.acme.goldchain.Miner#${minerId}`,
 };
 
 const deedId = uuid4();
@@ -188,7 +206,7 @@ const dd1 = {
   "goldWeight": 500,
   "listingState": "NOT_LISTED",
   "user": pohengId,
-  "gold": gold1Id,
+  "gold": newGold1,
 };
 
 const deedId2 = uuid4();
@@ -199,7 +217,7 @@ const dd2 = {
   "goldWeight": 600,
   "listingState": "NOT_LISTED",
   "user": pohengId,
-  "gold": gold2Id,
+  "gold": newGold2,
 };
 
 const deedId3 = uuid4();
@@ -210,7 +228,7 @@ const dd3 = {
   "goldWeight": 350,
   "listingState": "NOT_LISTED",
   "user": pohengId,
-  "gold": gold1Id,
+  "gold": newGold1,
 };
 
 const ld1 = {
@@ -256,6 +274,13 @@ const execute = async () => {
     // await minerSellGoldToCA(cgd2);
     await minerCreateGold(cgd1);
     await minerCreateGold(cgd2);
+
+    await CAGoldSaleRequest(cgr1);
+    await CAGoldSaleRequest(cgr2);
+
+    await minerSellGoldToCA(msg1);
+    await minerSellGoldToCA(msg2);
+
     await createDeed(dd1);
     await createDeed(dd2);
     await createDeed(dd3);

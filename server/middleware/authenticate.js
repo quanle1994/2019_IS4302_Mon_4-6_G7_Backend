@@ -2,7 +2,7 @@ import {getCaById, getDeedById, getGoldById, getMinerById, getUserById} from "..
 
 require('dotenv').load();
 import jwt from 'jsonwebtoken';
-import {getDetailsOfGold} from "../controllers/userController";
+import {getDetailsOfDeed, getDetailsOfGold} from "../controllers/userController";
 const crypto = require('crypto');
 const hash = (pwd) => crypto.createHash('sha256').update(pwd).digest('base64');
 
@@ -116,7 +116,7 @@ const verifyDeed = async (req, res, next) => {
       return undefined;
     });
     if (deed === undefined) throw Error('Deed not found');
-    req.deed = deed.data;
+    req.deed = await getDetailsOfDeed(deed.data);
     return next();
   } catch (e) {
     console.log(e);
