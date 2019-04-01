@@ -1,17 +1,17 @@
 import * as jwt from "jsonwebtoken";
 import {
   api,
-  createDeedCa,
-  createGold, getAllAcceptedOffers,
+  createDeed, createDeedCa, createDeedOffer,
+  createGold,
   getAllCas,
   getAllDeedGolds,
   getAllMiners,
   getAllOffers,
   getCaById,
-  getDeedById,
-  getGoldById, getMinerById, getUserById,
-  listDeed,
-  offer
+  getDeedById, getDeedOfferById,
+  getGoldById, getMinerById, getUserById, increaseCash,
+  listDeed, minerCreateGold,
+  offer,
 } from '../composer/api';
 
 const uuid4 = require('uuid4');
@@ -142,12 +142,15 @@ const getDetailsOfGold = async (id) => {
     return undefined;
   });
   const gold = res.data;
-  const ca = await getDetailsOfCa(gold.verifiedBy.split('#')[1]);
-  const miner = await getDetailsOfMiner(gold.miner.split('#')[1]);
-  if (ca === undefined) return undefined;
-  gold.verifiedBy = ca;
-  gold.ca = ca.name;
-  gold.minerInfo = miner;
+  if (gold.verifiedBy !== undefined) {
+    const ca = await getDetailsOfCa(gold.verifiedBy.split('#')[1]);
+    if (ca === undefined) return undefined;
+    gold.verifiedBy = ca;
+    gold.ca = ca.name;
+  }
+  if (gold.miner !== undefined) {
+    gold.minerInfo = await getDetailsOfMiner(gold.miner.split('#')[1]);
+  }
   return gold;
 };
 
@@ -178,33 +181,6 @@ const createDeedCaRequest = async (req, res) => {
   }
 };
 
-const createDeedRequest = async (req, res) => {
-  const {user, gold, body} = req;
-  const { type } = user;
-  if (user === undefined || type !== 'RegisteredUser') {
-    return res.status(401).send({message: 'User is not a RegisteredUser'});
-  }
-  const { deedId, weight, userId, title, price, description, state } = body;
-  const data = {
-    "$class": "org.acme.goldchain.CreateDeedCa",
-    "deedId": deedId,
-    "goldWeight": weight,
-    "listingState": state === undefined || state === 0 ? "NOT_LISTED" : state === 1 ? "FOR_1TO1_SALE" : "AUCTION",
-    "user": userId,
-    "gold": gold.goldId,
-    "title": title,
-    "price": price,
-    "description": description,
-  };
-  try {
-    await createDeedCa(data);
-    return res.status(200).send({message: 'Success'});
-  } catch (e) {
-    console.log(e);
-    return res.status(500).send({message: 'Internal Server Error'});
-  }
-};
-
 const listDeedRequest = async (req, res) => {
   const {body} = req;
   const { title, price, description, deedId, weightToList } = body;
@@ -229,8 +205,22 @@ const postOfferRequest = async (req, res) => {
   try {
     const { user, deed, body } = req;
     const { offerPrice } = body;
-    await offer({
+    const offerId = uuid4();
+    await createDeedOffer({
+      offerId,
+      goldWeight: deed.goldWeight,
       offerPrice,
+      purity: deed.gold.goldPurity,
+      title: deed.title,
+      description: deed.description,
+      owner: deed.currentOwner.userId,
+      price: deed.price,
+      buyer: user.username,
+      gold: deed.gold.goldId,
+      status: 'PENDING',
+    });
+    await offer({
+      deedOffer: offerId,
       deedToBuy: deed.deedId,
       buyerId: user.username,
     });
@@ -250,10 +240,10 @@ const getMyOffers = async (req, res) => {
     const { user, params } = req;
     const { userId } = params;
     const r = await getAllOffers();
-    const r2 = await getAllAcceptedOffers();
     const myOffers = userId === undefined ? r.data.filter(r => r.buyerId.endsWith(`#${user.username}`)) : r.data;
     const p = myOffers.map(async o => {
       try {
+        const r2 = await getDeedOfferById(o.deedOffer.split('#')[1]);
         const r4 = await getDeedById(o.deedToBuy.split('#')[1]);
         o.deedToBuy = await getDetailsOfDeed(r4.data);
         const r3 = await getUserById(o.buyerId.split('#')[1]);
@@ -261,17 +251,7 @@ const getMyOffers = async (req, res) => {
         delete r3.data.deedOwned;
         delete r3.data.goldOwned;
         o.buyer = r3.data;
-        return o;
-
-      } catch (e) {
-        console.log(e);
-        return undefined;
-      }
-    });
-    const q = r2.data.map(async o => {
-      try {
-        const r3 = await getDeedById(o.deedToBuy.split('#')[1]);
-        o.deedToBuy = await getDetailsOfDeed(r3.data);
+        o.deedOffer = r2.data;
         return o;
 
       } catch (e) {
@@ -280,24 +260,10 @@ const getMyOffers = async (req, res) => {
       }
     });
     return await Promise.all(p).then(async offers => {
-      return await Promise.all(q).then(accepts => {
-        offers = offers.filter(o => o.deedToBuy.listingState === 'FOR_1TO1_SALE' || o.deedToBuy.currentOwner.userId === user.username);
-        offers = offers.map(o => {
-          let deedAccepted = accepts.filter(a => a.deedToBuy.deedId === o.deedToBuy.deedId);
-          let matched = accepts.filter(a => a.offerTxId === o.transactionId);
-          o.status = matched.length === 0 && deedAccepted.length > 0 ? 'REJECTED'
-            : matched.length > 0 && deedAccepted.length > 0 && o.buyer.userId === user.username ? 'ACCEPTED' : 'PENDING';
-          return o;
-        });
-
-        if (userId !== undefined) {
-          return res.status(200).send(offers.filter(o => {
-            let matched = accepts.filter(a => a.offerTxId === o.transactionId);
-            return o.deedToBuy.currentOwner.userId === userId;
-          }));
-        }
-        return res.status(200).send(offers);
-      });
+      if (userId !== undefined) {
+        return res.status(200).send(offers.filter(o => o.deedToBuy.currentOwner.userId === userId));
+      }
+      return res.status(200).send(offers.filter(o => o.buyer.userId === user.username));
     });
   } catch (e) {
     console.log(e);
@@ -305,23 +271,84 @@ const getMyOffers = async (req, res) => {
   }
 };
 
-const createGoldRequest = async (req, res) => {
-  const { weight, ca, purity, minerId, user } = req.body;
-  const data = {
+const convertGoldToDeed = async (req, res) => {
+  const { user, body } = req;
+  const { weight, ca, purity, regUser } = body;
+  const goldId = uuid4();
+  const createGoldData = {
     "$class": "org.acme.goldchain.CreateGold",
-    "goldId": uuid4(),
+    "goldId": goldId,
     "goldWeight": weight,
     "goldPurity": purity,
     "caId": ca,
-    "user": user,
-    "minerId": minerId,
+  };
+  const createDeedData = {
+    "$class": "org.acme.goldchain.CreateDeed",
+    "deedId": uuid4(),
+    "goldWeight": weight,
+    "listingState": "NOT_LISTED",
+    "user": regUser,
+    "gold": goldId,
   };
   try {
-    await createGold(data);
+    await createGold(createGoldData);
+    await createDeed(createDeedData);
+    return res.status(200).send({message: 'Success'});
+  } catch (e) {
+    console.log(e.response.data.error);
+    return res.status(500).send({message: 'Failed to create gold'});
+  }
+};
+
+const aasd = async (req, res) => {
+  const {user, gold, body} = req;
+  const { type } = user;
+  if (user === undefined || type !== 'RegisteredUser') {
+    return res.status(401).send({message: 'User is not a RegisteredUser'});
+  }
+  const { deedId, weight, userId, title, price, description, state } = body;
+
+  try {
+    await createDeedCa(data);
     return res.status(200).send({message: 'Success'});
   } catch (e) {
     console.log(e);
-    return res.status(500).send({message: 'Failed to create gold'});
+    return res.status(500).send({message: 'Internal Server Error'});
+  }
+};
+
+const increaseCashRequest = async (req, res) => {
+  const { user, body } = req;
+  if (user.type !== 'RegisteredUser') return res.status(401).send({message: 'You are not permitted to top up cash'});
+  try {
+    await increaseCash({
+      "$class": "org.acme.goldchain.UpdateCashRegisteredUser",
+      "user": user.username,
+      "cash": body.amount,
+    });
+    return res.status(200).send({message: 'SUCCESS'});
+  } catch (e) {
+    console.log(e.response.data.error);
+    return res.status(500).send({message: 'Failed to increase cash'})
+  }
+};
+
+const minerCreateGoldRequest = async (req, res) => {
+  const { user, body } = req;
+  if (user.type !== 'Miner') return res.status(401).send({message: 'You are not a miner'});
+  try {
+    const { weight, purity } = body;
+    await minerCreateGold({
+      "$class": "org.acme.goldchain.MinerCreateGold",
+      "goldId": uuid4(),
+      "goldWeight": weight,
+      "goldPurity": purity,
+      "miner": user.username,
+    });
+    return res.status(200).send({message: 'SUCCESS'});
+  } catch (e) {
+    console.log(e.response.data.error);
+    return res.status(500).send({message: 'Failed to increase cash'})
   }
 };
 
@@ -365,12 +392,13 @@ module.exports = {
   getAllAssets,
   getDetailsOfDeed,
   getDetailsOfGold,
-  createGoldRequest,
+  convertGoldToDeed,
   createDeedCaRequest,
-  createDeedRequest,
   listDeedRequest,
   getAllMinersRequest,
   getAllCasRequest,
   postOfferRequest,
   getMyOffers,
+  increaseCashRequest,
+  minerCreateGoldRequest,
 };

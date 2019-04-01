@@ -234,9 +234,24 @@ transaction ListDeedForSale {
   // --> User sellerId
 }
 
+asset DeedOffer identified by offerId {
+  o String offerId
+  o Double goldWeight
+  o Double weightListed optional
+  o Double purity
+  o VerificationState status
+  o String title
+  o Double price
+  o Double offerPrice
+  o String description
+  o String owner
+  --> User buyer
+  --> Gold gold
+}
+
 // Buyer offer for deed on Listing
 transaction Offer {
-  o Double offerPrice
+  --> DeedOffer deedOffer
   --> Deed deedToBuy
   --> RegisteredUser buyerId
 }
@@ -249,6 +264,7 @@ transaction ListOfOffers {
 // User accept offer
 transaction AcceptOffer {
   --> Deed deedToBuy
+  o String accepterId // Full ID with participant type
   o String offerTxId
   o String newDeedId
 }

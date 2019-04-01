@@ -2,11 +2,15 @@ import {
   signUpUser,
   signInUser,
   getAllAssets,
-  createGoldRequest,
   createDeedCaRequest,
-  createDeedRequest,
   listDeedRequest,
-  getAllMinersRequest, getAllCasRequest, postOfferRequest, getMyOffers,
+  getAllMinersRequest,
+  getAllCasRequest,
+  postOfferRequest,
+  getMyOffers,
+  convertGoldToDeed,
+  increaseCashRequest,
+  minerCreateGoldRequest,
 } from '../controllers/userController';
 import {
   verifyDeed,
@@ -27,14 +31,11 @@ userRouter.route('/signin')
 userRouter.route('/getAllAssets')
   .get(verifyToken, getAllAssets);
 
-userRouter.route('/createGold')
-  .post(verifyToken, createGoldRequest);
+userRouter.route('/convertGoldToDeed')
+  .post(verifyToken, convertGoldToDeed);
 
 userRouter.route('/createDeedCa')
   .post(verifyToken, verifyGold, createDeedCaRequest);
-
-userRouter.route('/createDeed')
-  .post(verifyToken, verifyGold, createDeedRequest);
 
 userRouter.route('/listDeedForSale')
   .post(verifyToken, verifyDeed, listDeedRequest);
@@ -53,6 +54,12 @@ userRouter.route('/getMyOffers')
 
 userRouter.route('/getMyOffers/:userId')
   .get(verifyToken, getMyOffers);
+
+userRouter.route('/increaseCash')
+  .post(verifyToken, increaseCashRequest);
+
+userRouter.route('/minerCreateGoldRequest')
+  .post(verifyToken, minerCreateGoldRequest);
 
 module.exports = {
   userRouter

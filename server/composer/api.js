@@ -31,12 +31,15 @@ const getUserById = (id) => api
 const getDeedById = (id) => api
   .get(`/org.acme.goldchain.Deed/${id}`);
 
+const getDeedOfferById = (id) => api
+  .get(`/org.acme.goldchain.DeedOffer/${id}`);
+
 const getAllDeeds = (id) => api
   .get('/org.acme.goldchain.Deed');
 
 const createGold = (data) => api
   .post(
-    '/org.acme.goldchain.Gold',
+    '/org.acme.goldchain.CreateGold',
     JSON.parse(JSON.stringify(data)),
   );
 
@@ -84,6 +87,12 @@ const offer = data => api
     JSON.parse(JSON.stringify(data)),
   );
 
+const createDeedOffer = data => api
+  .post(
+    '/org.acme.goldchain.DeedOffer',
+    JSON.parse(JSON.stringify(data)),
+  );
+
 const getAllOffers = () => api
   .get(
     '/queries/allOfferTx'
@@ -106,6 +115,18 @@ const delist = (data) => api
     JSON.parse(JSON.stringify(data)),
   );
 
+const increaseCash = (data) => api
+  .post(
+    'org.acme.goldchain.UpdateCashRegisteredUser',
+    JSON.parse(JSON.stringify(data)),
+  );
+
+const minerCreateGold = (data) => api
+  .post(
+    'org.acme.goldchain.MinerCreateGold',
+    JSON.parse(JSON.stringify(data)),
+  );
+
 module.exports = {
   api,
   createMiner,
@@ -114,6 +135,7 @@ module.exports = {
   getCaById,
   getUserById,
   getDeedById,
+  getDeedOfferById,
   getAllDeeds,
   getGoldById,
   createGold,
@@ -126,8 +148,11 @@ module.exports = {
   listDeed,
   getAllDeedGolds,
   offer,
+  createDeedOffer,
   getAllOffers,
   getAllAcceptedOffers,
   acceptOffer,
   delist,
+  increaseCash,
+  minerCreateGold,
 };

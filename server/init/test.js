@@ -703,8 +703,8 @@ async function Offer(offer) {  // eslint-disable-line no-unused-vars
     }
     //throw new Error('user cash: '+offer.buyerId.cash+' total Bid: '+sumOfOffers);
     //check if user enough money
-    if(sumOfOffers + offer.offerPrice > offer.buyerId.cash){
-      let exceeded = sumOfOffers + offer.offerPrice-offer.buyerId.cash;
+    if(sumOfOffers + offer.deedOffer.offerPrice > offer.buyerId.cash){
+      let exceeded = sumOfOffers + offer.deedOffer.offerPrice-offer.buyerId.cash;
       throw new Error( 'Insufficient funds, additional amount needed: $'+exceeded);
     }
     if (listing.offers == null) {
@@ -717,6 +717,9 @@ async function Offer(offer) {  // eslint-disable-line no-unused-vars
       }
     }
     listing.offers.push(offer);//add back with latest offer
+    let deedOfferRegistry = await getAssetRegistry("org.acme.goldchain.DeedOffer");
+    const newOffer = getFactory().newResource('org.acme.goldchain','DeedOffer', offer.deedOffer.offerId);
+    await deedOfferRegistry.add(newOffer);
   }else{
     throw new Error('Listing is not FOR SALE');
   }
@@ -810,6 +813,7 @@ async function AcceptOffer(txn) {  // eslint-disable-line no-unused-vars
   const deedRegistry = await getAssetRegistry('org.acme.goldchain.Deed');
   const userRegistry = await getParticipantRegistry('org.acme.goldchain.RegisteredUser');
   const caRegistry = await getParticipantRegistry('org.acme.goldchain.CertificateAuthority');
+  const deedOfferRegistry = await getAssetRegistry('org.acme.goldchain.DeedOffer');
   const list = await caRegistry.getAll();
 
   if (!deed.offers || deed.offers.length == 0) {
@@ -832,7 +836,7 @@ async function AcceptOffer(txn) {  // eslint-disable-line no-unused-vars
     const offer = deed.offers[indexOfOffer]
     const seller = deed.currentOwner
     const buyer = offer.buyerId
-    const price = offer.offerPrice
+    const price = offer.deedOffer.offerPrice
     var isCA = false;
     for (var ca of list) {
       if (ca.getFullyQualifiedIdentifier() == seller.getFullyQualifiedIdentifier()) {
@@ -841,6 +845,10 @@ async function AcceptOffer(txn) {  // eslint-disable-line no-unused-vars
     }
     seller.cash += price;
     buyer.cash -= price;
+    deed.offers.forEach(function (item, index) {
+      item.deedOffer.status = index === indexOfOffer ? 'ACCEPTED' : 'REJECTED';
+      deedOfferRegistry.update(item.deedOffer);
+    });
     deed.offers = null;
     deed.listingState = 'NOT_LISTED';
     if (isSellWholeDeed) {
