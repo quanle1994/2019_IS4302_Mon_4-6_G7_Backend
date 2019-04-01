@@ -1,0 +1,985 @@
+// ****** Getting the delist to work ******
+rule Delist {
+    description: "Allow all to delist"
+    participant: "org.acme.goldchain.*"
+    operation: ALL
+    resource(d): "org.acme.goldchain.Deed"
+  	condition: (true)
+    action: ALLOW
+}
+
+// ****** All ******
+
+rule ReadListing {
+    description: "Allow read access to listed deed to all"
+    participant: "org.acme.goldchain.*"
+    operation: READ
+    resource(d): "org.acme.goldchain.Deed"
+  	condition: (d.listingState == "FOR_1TO1_SALE" || d.listingState == "AUCTION")
+    action: ALLOW
+}
+
+
+// ****** Certificate Authority ******
+rule CAGoldSaleRequest {
+    description: "Allow read CREATE of CAGoldSaleRequest"
+    participant: "org.acme.goldchain.CertificateAuthority"
+    operation: CREATE
+    resource: "org.acme.goldchain.CAGoldSaleRequest"
+    action: ALLOW
+}
+
+rule MinerReadAllGold {
+    description: "Allow read access of all deed to ca"
+    participant: "org.acme.goldchain.Miner"
+    operation: READ
+    resource: "org.acme.goldchain.Gold"
+    action: ALLOW
+}
+
+rule CreateGoldCall1 {
+    description: "Allow only the ca to call CreateGold"
+    participant: "org.acme.goldchain.Miner"
+    operation: CREATE
+    resource: "org.acme.goldchain.MinerCreateGold"
+    action: ALLOW
+}
+
+rule CreateGold2 {
+    description: "Allow only creation of gold resource through the CreateGold"
+    participant: "org.acme.goldchain.Miner"
+    operation: CREATE
+    resource: "org.acme.goldchain.Gold"
+  	transaction: "org.acme.goldchain.MinerCreateGold"
+    action: ALLOW
+}
+
+rule UpdateCreateGold3 {
+    description: "Allow only update of gold resource through the CreateGold"
+    participant: "org.acme.goldchain.Miner"
+    operation: UPDATE
+    resource: "org.acme.goldchain.Miner"
+  	transaction: "org.acme.goldchain.MinerCreateGold"
+    action: ALLOW
+}
+rule MinerSellGoldToCACall1 {
+    description: "Allow only the ca to call MinerSellGoldToCA"
+    participant: "org.acme.goldchain.Miner"
+    operation: CREATE
+    resource: "org.acme.goldchain.MinerSellGoldToCA"
+    action: ALLOW
+}
+
+rule MinerSellGoldToCA2 {
+    description: "Allow only creation of gold resource bought from miner through the MinerSellGoldToCA"
+    participant: "org.acme.goldchain.Miner"
+    operation: CREATE
+    resource: "org.acme.goldchain.Gold"
+  	transaction: "org.acme.goldchain.MinerSellGoldToCA"
+    action: ALLOW
+}
+
+rule MinerSellGoldToCAUpdateCA3 {
+    description: "Allow only update of ca resource through the MinerSellGoldToCA"
+    participant(p): "org.acme.goldchain.Miner"
+    operation: UPDATE
+    resource(r): "org.acme.goldchain.Miner"
+  	transaction: "org.acme.goldchain.MinerSellGoldToCA"
+  	condition: (p.getIdentifier() == r.getIdentifier())
+    action: ALLOW
+}
+rule MinerSellGoldToCAUpdateCA4 {
+    description: "Allow only update of ca resource through the MinerSellGoldToCA"
+    participant: "org.acme.goldchain.Miner"
+    operation: UPDATE
+    resource: "org.acme.goldchain.CertificateAuthority"
+  	transaction: "org.acme.goldchain.MinerSellGoldToCA"
+    action: ALLOW
+}
+rule MinerSellGoldToCAUpdateCA5 {
+    description: "Allow only update of ca resource through the MinerSellGoldToCA"
+    participant: "org.acme.goldchain.Miner"
+    operation: UPDATE
+    resource: "org.acme.goldchain.Gold"
+  	transaction: "org.acme.goldchain.MinerSellGoldToCA"
+    action: ALLOW
+}
+
+
+// ****** Certificate Authority ******
+
+rule CAReadAllDeed {
+    description: "Allow read access of all deed to ca"
+    participant: "org.acme.goldchain.CertificateAuthority"
+    operation: READ
+    resource: "org.acme.goldchain.Deed"
+    action: ALLOW
+}
+
+rule CACreateAllDeed {
+	description: "Allow create access of all deed to ca"
+    participant: "org.acme.goldchain.CertificateAuthority"
+    operation: CREATE
+    resource: "org.acme.goldchain.Deed"
+    action: ALLOW
+}
+
+rule CAReadAllGold {
+    description: "Allow read access of all gold to ca"
+    participant: "org.acme.goldchain.CertificateAuthority"
+    operation: READ
+    resource: "org.acme.goldchain.Gold"
+    action: ALLOW
+}
+
+rule CAReadAllUser {
+    description: "Allow read access of all user to ca"
+    participant: "org.acme.goldchain.CertificateAuthority"
+    operation: READ
+    resource: "org.acme.goldchain.User"
+    action: ALLOW
+}
+
+rule LoginAsCA {
+    description: "Allow only the ca to call LoginAsCertificateAuthority"
+    participant: "org.acme.goldchain.CertificateAuthority"
+    operation: CREATE
+    resource: "org.acme.goldchain.LoginAsCertificateAuthority"
+    action: ALLOW
+}
+
+rule UpdateCACall {
+    description: "Allow only CA participant resource to call UpdateCertificateAuthority to update his particulars"
+    participant: "org.acme.goldchain.CertificateAuthority"
+    operation: CREATE
+    resource: "org.acme.goldchain.UpdateCertificateAuthority"
+    action: ALLOW
+}
+
+rule UpdateCA {
+    description: "Allow only update of ca participant resource through the UpdateCertificateAuthority"
+    participant(p): "org.acme.goldchain.CertificateAuthority"
+    operation: UPDATE
+    resource(r): "org.acme.goldchain.CertificateAuthority"
+  	transaction: "org.acme.goldchain.UpdateCertificateAuthority"
+  	condition: (p.getIdentifier() == r.getIdentifier())
+    action: ALLOW
+}
+
+rule CreateGoldCall {
+    description: "Allow only the ca to call CreateGold"
+    participant: "org.acme.goldchain.CertificateAuthority"
+    operation: CREATE
+    resource: "org.acme.goldchain.CreateGold"
+    action: ALLOW
+}
+
+rule CreateGold {
+    description: "Allow only creation of gold resource through the CreateGold"
+    participant: "org.acme.goldchain.CertificateAuthority"
+    operation: CREATE
+    resource: "org.acme.goldchain.Gold"
+  	transaction: "org.acme.goldchain.CreateGold"
+    action: ALLOW
+}
+
+rule UpdateCreateGold {
+    description: "Allow only update of gold resource through the CreateGold"
+    participant: "org.acme.goldchain.CertificateAuthority"
+    operation: UPDATE
+    resource: "org.acme.goldchain.CertificateAuthority"
+  	transaction: "org.acme.goldchain.CreateGold"
+    action: ALLOW
+}
+
+rule UpdateGoldCall {
+    description: "Allow only the ca to call UpdateGold"
+    participant: "org.acme.goldchain.CertificateAuthority"
+    operation: CREATE
+    resource: "org.acme.goldchain.UpdateGold"
+    action: ALLOW
+}
+
+rule UpdateGold {
+    description: "Allow only update of gold resource through the UpdateGold"
+    participant: "org.acme.goldchain.CertificateAuthority"
+    operation: UPDATE
+    resource: "org.acme.goldchain.Gold"
+  	transaction: "org.acme.goldchain.UpdateGold"
+    action: ALLOW
+}
+
+rule DeleteGoldCall {
+    description: "Allow only the ca to call DeleteGoldById"
+    participant: "org.acme.goldchain.CertificateAuthority"
+    operation: CREATE
+    resource: "org.acme.goldchain.DeleteGoldById"
+    action: ALLOW
+}
+
+rule DeleteGold {
+    description: "Allow only delete of gold resource through the DeleteGoldById"
+    participant: "org.acme.goldchain.CertificateAuthority"
+    operation: DELETE
+    resource: "org.acme.goldchain.Gold"
+  	transaction: "org.acme.goldchain.DeleteGoldById"
+    action: ALLOW
+}
+
+rule UpdateCAGoldOwned {
+    description: "Allow only update of gold resource through the DeleteGoldById"
+    participant: "org.acme.goldchain.CertificateAuthority"
+    operation: UPDATE
+    resource: "org.acme.goldchain.CertificateAuthority"
+  	transaction: "org.acme.goldchain.DeleteGoldById"
+    action: ALLOW
+}
+
+rule MinerSellGoldToCACall {
+    description: "Allow only the ca to call MinerSellGoldToCA"
+    participant: "org.acme.goldchain.CertificateAuthority"
+    operation: CREATE
+    resource: "org.acme.goldchain.MinerSellGoldToCA"
+    action: ALLOW
+}
+
+rule MinerSellGoldToCA {
+    description: "Allow only creation of gold resource bought from miner through the MinerSellGoldToCA"
+    participant: "org.acme.goldchain.CertificateAuthority"
+    operation: CREATE
+    resource: "org.acme.goldchain.Gold"
+  	transaction: "org.acme.goldchain.MinerSellGoldToCA"
+    action: ALLOW
+}
+
+rule MinerSellGoldToCAUpdateCA {
+    description: "Allow only update of ca resource through the MinerSellGoldToCA"
+    participant(p): "org.acme.goldchain.CertificateAuthority"
+    operation: UPDATE
+    resource(r): "org.acme.goldchain.CertificateAuthority"
+  	transaction: "org.acme.goldchain.MinerSellGoldToCA"
+  	condition: (p.getIdentifier() == r.getIdentifier())
+    action: ALLOW
+}
+
+rule CreateDeedCall {
+    description: "Allow only the ca to call CreateDeed"
+    participant: "org.acme.goldchain.CertificateAuthority"
+    operation: CREATE
+    resource: "org.acme.goldchain.CreateDeed"
+    action: ALLOW
+}
+
+rule CreateDeed {
+    description: "Allow only creation of deed resource through the CreateDeed"
+    participant: "org.acme.goldchain.CertificateAuthority"
+    operation: CREATE
+    resource: "org.acme.goldchain.Deed"
+  	transaction: "org.acme.goldchain.CreateDeed"
+    action: ALLOW
+}
+
+rule CreateDeedUpdateRegisteredUser {
+    description: "Allow only update of registereduser resource through the CreateDeed"
+    participant: "org.acme.goldchain.CertificateAuthority"
+    operation: UPDATE
+    resource(r): "org.acme.goldchain.RegisteredUser"
+  	transaction(t): "org.acme.goldchain.CreateDeed"
+  	condition: (r.getIdentifier() == t.user.getIdentifier())
+    action: ALLOW
+}
+
+rule CreateDeedCACall {
+    description: "Allow only the ca to call CreateDeedCa"
+    participant: "org.acme.goldchain.CertificateAuthority"
+    operation: CREATE
+    resource: "org.acme.goldchain.CreateDeedCa"
+    action: ALLOW
+}
+
+rule CreateDeedCA {
+    description: "Allow only creation of deed resource for CA through the CreateDeedCa"
+    participant: "org.acme.goldchain.CertificateAuthority"
+    operation: CREATE
+    resource: "org.acme.goldchain.Deed"
+  	transaction: "org.acme.goldchain.CreateDeedCa"
+    action: ALLOW
+}
+
+rule CreateDeedUpdateCertificateAuthority {
+    description: "Allow only update of certificateauthority resource through the CreateDeed"
+    participant: "org.acme.goldchain.CertificateAuthority"
+    operation: UPDATE
+    resource(r): "org.acme.goldchain.CertificateAuthority"
+  	transaction(t): "org.acme.goldchain.CreateDeedCa"
+  	condition: (r.getIdentifier() == t.user.getIdentifier())
+    action: ALLOW
+}
+
+rule UpdateDeedCall {
+    description: "Allow only the ca to call UpdateDeed"
+    participant: "org.acme.goldchain.CertificateAuthority"
+    operation: CREATE
+    resource: "org.acme.goldchain.UpdateDeed"
+    action: ALLOW
+}
+
+rule UpdateDeed {
+    description: "Allow only update of deed resource through the UpdateDeed"
+    participant: "org.acme.goldchain.CertificateAuthority"
+    operation: UPDATE
+    resource: "org.acme.goldchain.Deed"
+  	transaction: "org.acme.goldchain.UpdateDeed"
+    action: ALLOW
+}
+
+ rule ConvertToDeedCall {
+    description: "Allow only the ca to call CAconvertToDeed"
+    participant: "org.acme.goldchain.CertificateAuthority"
+    operation: CREATE
+    resource: "org.acme.goldchain.CAconvertToDeed"
+    action: ALLOW
+}
+
+/* rule ConvertToDeed {
+    description: "Allow only creation of deed resource through the CreateDeed"
+    participant: "org.acme.goldchain.CertificateAuthority"
+    operation: CREATE
+    resource: "org.acme.goldchain.Deed"
+  	transaction: "org.acme.goldchain.CreateDeed"
+    action: ALLOW
+}*/
+
+rule ConvertToDeedFromUserCall {
+    description: "Allow only the ca to call UserConvertToDeed"
+    participant: "org.acme.goldchain.CertificateAuthority"
+    operation: CREATE
+    resource: "org.acme.goldchain.UserConvertToDeed"
+    action: ALLOW
+}
+
+rule ConvertToDeedFromUser {
+    description: "Allow only creation of deed resource through the UserConvertToDeed"
+    participant: "org.acme.goldchain.CertificateAuthority"
+    operation: UPDATE
+    resource: "org.acme.goldchain.Deed"
+  	transaction: "org.acme.goldchain.UserConvertToDeed"
+    action: ALLOW
+}
+
+rule UserClaimGoldCall {
+    description: "Allow only the ca to call UserClaimGold"
+    participant: "org.acme.goldchain.CertificateAuthority"
+    operation: CREATE
+    resource: "org.acme.goldchain.UserClaimGold"
+    action: ALLOW
+}
+
+rule UserClaimGold {
+    description: "Allow update of deed resource through the UserClaimGold"
+    participant: "org.acme.goldchain.CertificateAuthority"
+    operation: UPDATE
+    resource: "org.acme.goldchain.Deed"
+  	transaction: "org.acme.goldchain.UserClaimGold"
+    action: ALLOW
+}
+
+rule UserClaimGoldCreateGold {
+    description: "Allow creation and update of gold resource through the UserClaimGold"
+    participant: "org.acme.goldchain.CertificateAuthority"
+    operation: CREATE,UPDATE
+    resource: "org.acme.goldchain.Gold"
+  	transaction: "org.acme.goldchain.UserClaimGold"
+    action: ALLOW
+}
+
+rule UserClaimGoldUpdateRegisteredUser {
+    description: "Allow update of registered user resource through the UserClaimGold"
+    participant: "org.acme.goldchain.CertificateAuthority"
+    operation: UPDATE
+    resource: "org.acme.goldchain.RegisteredUser"
+  	transaction: "org.acme.goldchain.UserClaimGold"
+    action: ALLOW
+}
+
+/*rule UserClaimGold_UpdateGold {
+    description: "Allow only update of gold resource through the UserClaimGold"
+    participant: "org.acme.goldchain.CertificateAuthority"
+    operation: UPDATE
+    resource: "org.acme.goldchain.Gold"
+  	transaction: "org.acme.goldchain.UserClaimGold"
+    action: ALLOW
+}*/
+
+/*rule UserClaimGold {
+    description: "Allow only user participant resource to claim gold through the UserClaimGold"
+    participant(p): "org.acme.goldchain.RegisteredUser"
+    operation: CREATE
+    resource(r): "org.acme.goldchain.UserClaimGold"
+  	condition: (p.getIdentifier() == r.deed.currentOwner.getIdentifier())
+    action: ALLOW
+}*/
+
+rule CAUpdateUserVerificationRequestCall {
+    description: "Allow only the certificate authority to update a user gold verification request"
+    participant: "org.acme.goldchain.CertificateAuthority"
+    operation: CREATE
+    resource: "org.acme.goldchain.CAUpdateUserVerificationRequest"
+    action: ALLOW
+}
+
+rule CAUpdateUserDeedRedemptionRequestCall {
+    description: "Allow only the certificate authority to update a user deed redemption request"
+    participant: "org.acme.goldchain.CertificateAuthority"
+    operation: CREATE
+    resource: "org.acme.goldchain.CAUpdateUserDeedRedemptionRequest"
+    action: ALLOW
+}
+
+rule CAUpdateMinerGoldSaleRequestCall {
+    description: "Allow only the certificate authority to update a miner gold sale request"
+    participant: "org.acme.goldchain.CertificateAuthority"
+    operation: CREATE
+    resource: "org.acme.goldchain.CAUpdateMinerGoldSaleRequest"
+    action: ALLOW
+}
+
+rule GetAllGoldCall {
+    description: "Allow only the ca to call GetAllGold"
+    participant: "org.acme.goldchain.CertificateAuthority"
+    operation: CREATE
+    resource: "org.acme.goldchain.GetAllGold"
+    action: ALLOW
+}
+
+rule GetGoldById {
+    description: "Allow only the ca to call GetGoldById"
+    participant: "org.acme.goldchain.CertificateAuthority"
+    operation: CREATE
+    resource: "org.acme.goldchain.GetGoldById"
+    action: ALLOW
+}
+
+rule DeleteGoldById {
+    description: "Allow only the ca to call DeleteGoldById"
+    participant: "org.acme.goldchain.CertificateAuthority"
+    operation: CREATE
+    resource: "org.acme.goldchain.DeleteGoldById"
+    action: ALLOW
+}
+
+rule GetAllDeed {
+    description: "Allow only the ca to call GetAllDeed"
+    participant: "org.acme.goldchain.CertificateAuthority"
+    operation: CREATE
+    resource: "org.acme.goldchain.GetAllDeed"
+    action: ALLOW
+}
+
+rule GetDeedById {
+    description: "Allow only the ca to call GetDeedById"
+    participant: "org.acme.goldchain.CertificateAuthority"
+    operation: CREATE
+    resource: "org.acme.goldchain.GetDeedById"
+    action: ALLOW
+}
+
+rule DeleteDeedById {
+    description: "Allow only the ca to call DeleteDeedById"
+    participant: "org.acme.goldchain.CertificateAuthority"
+    operation: CREATE
+    resource: "org.acme.goldchain.DeleteDeedById"
+    action: ALLOW
+}
+
+rule CertificateAuthorityListDeedForAuctionCall {
+    description: "Allow only certificate authority participant resource to call ListDeedForAuction to list deed for auction"
+    participant: "org.acme.goldchain.CertificateAuthority"
+    operation: CREATE
+    resource: "org.acme.goldchain.ListDeedForAuction"
+    action: ALLOW
+}
+
+rule CertificateAuthorityListDeedForAuctionTx {
+    description: "Allow only update of deed resource to be listed for auction through the ListDeedForAuction"
+    participant(p): "org.acme.goldchain.CertificateAuthority"
+    operation: UPDATE
+    resource(r): "org.acme.goldchain.Deed"
+  	transaction: "org.acme.goldchain.ListDeedForAuction"
+  	condition: ((p.getIdentifier() == r.currentOwner.getIdentifier()) && (r.listingState != "AUCTION" || r.listingState != "FOR_1TO1_SALE"))
+    action: ALLOW
+}
+
+rule CertificateAuthorityAuctionCloseCall {
+    description: "Allow the certificate authority to call CloseBidding tx. He can only close deed listed for auction"
+    participant(m): "org.acme.goldchain.CertificateAuthority"
+    operation: CREATE
+    resource(o): "org.acme.goldchain.CloseBidding"
+    condition: (o.deedToClose.currentOwner.getIdentifier() == m.getIdentifier() && o.deedToClose.listingState == "AUCTION")
+    action: ALLOW
+}
+
+rule CertificateAuthorityAuctionCloseTx {
+    description: "Allow the certificate authority to update Deed via the CloseBidding tx for closing an auction"
+    participant: "org.acme.goldchain.CertificateAuthority"
+    operation: UPDATE
+    resource: "org.acme.goldchain.*"
+    transaction: "org.acme.goldchain.CloseBidding"
+    action: ALLOW
+}
+
+rule CertificateAuthorityListDeedFor1To1SaleCall {
+    description: "Allow only certificate authority participant resource to call ListDeedForSale to list deed for 1-1 sale"
+    participant: "org.acme.goldchain.CertificateAuthority"
+    operation: CREATE
+    resource: "org.acme.goldchain.ListDeedForSale"
+    action: ALLOW
+}
+
+rule CertificateAuthorityListDeedFor1To1SaleTx {
+    description: "Allow only update of certificate authority resource to be listed for 1-1 sale through the ListDeedForSale"
+    participant(p): "org.acme.goldchain.CertificateAuthority"
+    operation: UPDATE
+    resource(r): "org.acme.goldchain.Deed"
+  	transaction: "org.acme.goldchain.ListDeedForSale"
+  	condition: ((p.getIdentifier() == r.currentOwner.getIdentifier()) && (r.listingState != "AUCTION" || r.listingState != "FOR_1TO1_SALE"))
+    action: ALLOW
+}
+
+rule CertificateAuthorityAcceptOfferCall {
+    description: "Allow the certificate authority to call AcceptOffer tx. He can only accept offer for 1-1 sale"
+    participant(m): "org.acme.goldchain.CertificateAuthority"
+    operation: CREATE
+    resource(o): "org.acme.goldchain.AcceptOffer"
+    condition: (o.deedToBuy.currentOwner.getIdentifier() == m.getIdentifier() && o.deedToBuy.listingState == "FOR_1TO1_SALE")
+    action: ALLOW
+}
+
+rule CertificateAuthorityAcceptOfferTx {
+    description: "Allow the certificate authority to update Deed via the AcceptOffer tx for accepting an offer"
+    participant: "org.acme.goldchain.CertificateAuthority"
+    operation: UPDATE
+    resource: "org.acme.goldchain.*"
+    transaction: "org.acme.goldchain.AcceptOffer"
+    action: ALLOW
+}
+
+rule CertificateAuthorityAcceptOfferUserSplitDeedTx {
+    description: "Allow the certificate authority to create Deed via the AcceptOffer tx for closing an offer"
+    participant: "org.acme.goldchain.CertificateAuthority"
+    operation: CREATE
+    resource: "org.acme.goldchain.Deed"
+    transaction: "org.acme.goldchain.AcceptOffer"
+    action: ALLOW
+}
+
+// ************************
+
+// ****** Miner ******
+
+rule MinerReadAllCA {
+    description: "Allow read access of all ca to miner"
+    participant: "org.acme.goldchain.Miner"
+    operation: READ
+    resource: "org.acme.goldchain.CertificateAuthority"
+    action: ALLOW
+}
+
+rule MinerReadAllMiner {
+    description: "Allow read access of all miner to miner"
+    participant: "org.acme.goldchain.Miner"
+    operation: READ
+    resource: "org.acme.goldchain.Miner"
+    action: ALLOW
+}
+
+rule LoginAsMiner {
+    description: "Allow only the miner to call LoginAsMiner"
+    participant: "org.acme.goldchain.Miner"
+    operation: CREATE
+    resource: "org.acme.goldchain.LoginAsMiner"
+    action: ALLOW
+}
+
+rule UpdateMinerCall {
+    description: "Allow only miner participant resource to call UpdateMiner to update particulars"
+    participant: "org.acme.goldchain.Miner"
+    operation: CREATE
+    resource: "org.acme.goldchain.UpdateMiner"
+    action: ALLOW
+}
+
+rule UpdateMiner {
+    description: "Allow only update of miner participant resource through the UpdateMiner"
+    participant(p): "org.acme.goldchain.Miner"
+    operation: UPDATE
+    resource(r): "org.acme.goldchain.Miner"
+  	transaction: "org.acme.goldchain.UpdateMiner"
+  	condition: (p.getIdentifier() == r.getIdentifier())
+    action: ALLOW
+}
+
+rule MinerSubmitGoldSaleRequestTx {
+    description: "Allow only the miner to submit a gold sale request"
+    participant: "org.acme.goldchain.Miner"
+    operation: CREATE
+    resource: "org.acme.goldchain.MinerSubmitGoldSaleRequest"
+    action: ALLOW
+}
+
+// ************************
+
+// ****** Registered User ******
+
+rule RegisteredUserReadDeedOwned {
+    description: "Allow read access of owned deed to RegisteredUser"
+    participant(p): "org.acme.goldchain.RegisteredUser"
+    operation: READ
+    resource(r): "org.acme.goldchain.Deed"
+  	condition: (p.getIdentifier() == r.currentOwner.getIdentifier())
+    action: ALLOW
+}
+
+rule RegisteredUserReadAllCA {
+    description: "Allow read access of all RegisteredUser to ca"
+    participant: "org.acme.goldchain.RegisteredUser"
+    operation: READ
+    resource: "org.acme.goldchain.CertificateAuthority"
+    action: ALLOW
+}
+
+rule RegisteredUserReadAllRegisteredUser {
+    description: "Allow read access of all RegisteredUser to RegisteredUser"
+    participant: "org.acme.goldchain.RegisteredUser"
+    operation: READ
+    resource: "org.acme.goldchain.RegisteredUser"
+    action: ALLOW
+}
+
+rule LoginAsRegisteredUser {
+    description: "Allow only the user to call LoginAsRegisteredUser"
+    participant: "org.acme.goldchain.RegisteredUser"
+    operation: CREATE
+    resource: "org.acme.goldchain.LoginAsRegisteredUser"
+    action: ALLOW
+}
+
+rule UpdateRegisteredUserCall {
+    description: "Allow only registered user participant resource to call UpdateRegisteredUser to update particulars"
+    participant: "org.acme.goldchain.RegisteredUser"
+    operation: CREATE
+    resource: "org.acme.goldchain.UpdateRegisteredUser"
+    action: ALLOW
+}
+
+rule UpdateRegisteredUserTx {
+    description: "Allow only update of user participant resource through the UpdateRegisteredUser"
+    participant(p): "org.acme.goldchain.RegisteredUser"
+    operation: UPDATE
+    resource(r): "org.acme.goldchain.RegisteredUser"
+  	transaction: "org.acme.goldchain.UpdateRegisteredUser"
+  	condition: (p.getIdentifier() == r.getIdentifier())
+    action: ALLOW
+}
+
+/*
+rule UpdateRegisteredUser {
+    description: "Allow only update of user participant personal particulars resource through the UpdateRegisteredUser"
+    participant(p): "org.acme.goldchain.RegisteredUser"
+    operation: UPDATE
+    resource(r): "org.acme.goldchain.RegisteredUser"
+  	transaction: "org.acme.goldchain.UpdateRegisteredUser"
+  	condition: (p.getIdentifier() == r.getIdentifier())
+    action: ALLOW
+}*/
+
+rule UpdateRegisteredUserCashCall {
+    description: "Allow only registered user participant cash resource to call UpdateCashRegisteredUser to update cash in account"
+    participant: "org.acme.goldchain.RegisteredUser"
+    operation: CREATE
+    resource: "org.acme.goldchain.UpdateCashRegisteredUser"
+    action: ALLOW
+}
+
+rule UpdateRegisteredUserCashTx {
+    description: "Allow only update of user participant cash resource through the UpdateCashRegisteredUser"
+    participant(p): "org.acme.goldchain.RegisteredUser"
+    operation: UPDATE
+    resource(r): "org.acme.goldchain.RegisteredUser"
+  	transaction: "org.acme.goldchain.UpdateCashRegisteredUser"
+  	condition: (p.getIdentifier() == r.getIdentifier())
+    action: ALLOW
+}
+
+/*
+rule UpdateRegisteredUserCash {
+    description: "Allow only update of user participant cash resource through the UpdateCashRegisteredUser"
+    participant(p): "org.acme.goldchain.RegisteredUser"
+    operation: UPDATE
+    resource(r): "org.acme.goldchain.RegisteredUser"
+  	transaction: "org.acme.goldchain.UpdateCashRegisteredUser"
+  	condition: (p.getIdentifier() == r.getIdentifier())
+    action: ALLOW
+}*/
+
+rule RegisteredUserListDeedForAuctionCall {
+    description: "Allow only registered user participant resource to call ListDeedForAuction to list deed for auction"
+    participant: "org.acme.goldchain.RegisteredUser"
+    operation: CREATE
+    resource: "org.acme.goldchain.ListDeedForAuction"
+    action: ALLOW
+}
+
+rule RegisteredUserListDeedForAuctionTx {
+    description: "Allow only update of deed resource to be listed for auction through the ListDeedForAuction"
+    participant(p): "org.acme.goldchain.RegisteredUser"
+    operation: UPDATE
+    resource(r): "org.acme.goldchain.Deed"
+  	transaction: "org.acme.goldchain.ListDeedForAuction"
+  	condition: ((p.getIdentifier() == r.currentOwner.getIdentifier()) && (r.listingState != "AUCTION" || r.listingState != "FOR_1TO1_SALE"))
+    action: ALLOW
+}
+
+/*
+rule RegisteredUserListDeedForAuction {
+    description: "Allow only user participant resource to list deed for auction through the ListDeedForAuction"
+    participant(p): "org.acme.goldchain.RegisteredUser"
+    operation: UPDATE
+    resource(r): "org.acme.goldchain.Deed"
+  	transaction: "org.acme.goldchain.ListDeedForAuction"
+  	condition: ((p.getIdentifier() == r.currentOwner.getIdentifier()) && (r.listingState == "NOT_LISTED"))
+    action: ALLOW
+}*/
+
+rule RegisteredUserListDeedFor1To1SaleReadDeed {
+    description: "Allow only registered user participant resource to call ListDeedForSale to read deed assets"
+    participant: "org.acme.goldchain.RegisteredUser"
+    operation: READ
+    resource: "org.acme.goldchain.Deed"
+    action: ALLOW
+}
+
+rule RegisteredUserListDeedFor1To1SaleReadGold {
+    description: "Allow only registered user participant resource to call ListDeedForSale to read gold assets"
+    participant: "org.acme.goldchain.RegisteredUser"
+    operation: READ
+    resource: "org.acme.goldchain.Gold"
+    action: ALLOW
+}
+
+rule RegisteredUserListDeedFor1To1SaleCall {
+    description: "Allow only registered user participant resource to call ListDeedForSale to list deed for 1-1 sale"
+    participant: "org.acme.goldchain.RegisteredUser"
+    operation: CREATE
+    resource: "org.acme.goldchain.ListDeedForSale"
+    action: ALLOW
+}
+
+rule RegisteredUserListDeedFor1To1SaleTx {
+    description: "Allow only update of deed resource to be listed for 1-1 sale through the ListDeedForSale"
+    participant(p): "org.acme.goldchain.RegisteredUser"
+    operation: UPDATE
+    resource(r): "org.acme.goldchain.Deed"
+  	transaction: "org.acme.goldchain.ListDeedForSale"
+  	condition: ((p.getIdentifier() == r.currentOwner.getIdentifier()) && (r.listingState != "AUCTION" || r.listingState != "FOR_1TO1_SALE"))
+    action: ALLOW
+}
+
+/*
+rule RegisteredUserListDeedFor1To1Sale {
+    description: "Allow only user participant resource to list deed for 1-1 sale through the ListDeedForSale"
+    participant(p): "org.acme.goldchain.RegisteredUser"
+    operation: UPDATE
+    resource(r): "org.acme.goldchain.Deed"
+  	transaction: "org.acme.goldchain.ListDeedForSale"
+  	condition: ((p.getIdentifier() == r.currentOwner.getIdentifier()) && (r.listingState == "NOT_LISTED"))
+    action: ALLOW
+}*/
+
+rule MakeOfferCall {
+    description: "Allow the user to call Offer tx. He can only make offer representing himself"
+    participant(m): "org.acme.goldchain.RegisteredUser"
+    operation: CREATE
+    resource(o): "org.acme.goldchain.Offer"
+  	condition: (o.buyerId.getIdentifier() == m.getIdentifier())
+    action: ALLOW
+}
+
+rule MakeSelfOfferTx {
+    description: "Allow the user to update Deed via the Offer tx for making an offer"
+    participant(m): "org.acme.goldchain.RegisteredUser"
+    operation: UPDATE
+    resource(o): "org.acme.goldchain.Deed"
+    transaction: "org.acme.goldchain.Offer"
+	condition: (o.currentOwner.getIdentifier() == m.getIdentifier())
+    action: DENY
+}
+
+rule MakeOfferTx {
+    description: "Allow the user to update Deed via the Offer tx for making an offer"
+    participant: "org.acme.goldchain.RegisteredUser"
+    operation: UPDATE
+    resource: "org.acme.goldchain.Deed"
+    transaction: "org.acme.goldchain.Offer"
+    action: ALLOW
+}
+
+rule AcceptOfferCall {
+    description: "Allow the user to call AcceptOffer tx. He can only accept offer for 1-1 sale"
+    participant(m): "org.acme.goldchain.RegisteredUser"
+    operation: CREATE
+    resource(o): "org.acme.goldchain.AcceptOffer"
+    condition: (o.deedToBuy.currentOwner.getIdentifier() == m.getIdentifier() && o.deedToBuy.listingState == "FOR_1TO1_SALE")
+    action: ALLOW
+}
+
+rule AcceptOfferTx {
+    description: "Allow the user to update Deed via the AcceptOffer tx for accepting an offer"
+    participant: "org.acme.goldchain.RegisteredUser"
+    operation: UPDATE
+    resource: "org.acme.goldchain.*"
+    transaction: "org.acme.goldchain.AcceptOffer"
+    action: ALLOW
+}
+
+rule AcceptOfferUserSplitDeedTx {
+    description: "Allow the user to create Deed via the AcceptOffer tx for closing an offer"
+    participant: "org.acme.goldchain.RegisteredUser"
+    operation: CREATE
+    resource: "org.acme.goldchain.Deed"
+    transaction: "org.acme.goldchain.AcceptOffer"
+    action: ALLOW
+}
+
+rule AuctionCloseCall {
+    description: "Allow the user to call CloseBidding tx. He can only close deed listed for auction"
+    participant(m): "org.acme.goldchain.RegisteredUser"
+    operation: CREATE
+    resource(o): "org.acme.goldchain.CloseBidding"
+    condition: (o.deedToClose.currentOwner.getIdentifier() == m.getIdentifier() && o.deedToClose.listingState == "AUCTION")
+    action: ALLOW
+}
+
+rule AuctionCloseTx {
+    description: "Allow the user to update Deed via the CloseBidding tx for closing an auction"
+    participant: "org.acme.goldchain.RegisteredUser"
+    operation: UPDATE
+    resource: "org.acme.goldchain.*"
+    transaction: "org.acme.goldchain.CloseBidding"
+    action: ALLOW
+}
+
+rule AuctionCloseUserSplitDeedTx {
+    description: "Allow the user to create Deed via the CloseBidding tx for closing an auction"
+    participant: "org.acme.goldchain.RegisteredUser"
+    operation: CREATE
+    resource: "org.acme.goldchain.Deed"
+    transaction: "org.acme.goldchain.CloseBidding"
+    action: ALLOW
+}
+
+/*
+rule AuctionClose {
+    description: "Allow the owner of the deed to call CloseBidding tx"
+    participant(p): "org.acme.goldchain.RegisteredUser"
+    operation: CREATE
+    resource(r): "org.acme.goldchain.CloseBidding"
+  	condition: (p.getIdentifier() == r.deedToClose.currentOwner.getIdentifier())
+    action: ALLOW
+}*/
+
+rule UpdateOfferCall {
+    description: "Allow the user to call UpdateOffer tx. He can only update his offer through this tx"
+    participant(m): "org.acme.goldchain.RegisteredUser"
+    operation: CREATE
+    resource(o): "org.acme.goldchain.UpdateOffer"
+    condition: (o.deedListing.listingState == "AUCTION" || o.deedListing.listingState == "FOR_1TO1_SALE")
+    action: ALLOW
+}
+
+rule UpdateOfferTx {
+    description: "Allow the user to update Deed via the UpdateOffer tx for updating an offer amount"
+    participant: "org.acme.goldchain.RegisteredUser"
+    operation: UPDATE
+    resource: "org.acme.goldchain.Deed"
+    transaction: "org.acme.goldchain.UpdateOffer"
+    action: ALLOW
+}
+
+/*
+rule UpdateOffer {
+    description: "Allow the user to update offer via the UpdateOffer tx"
+    participant: "org.acme.goldchain.RegisteredUser"
+    operation: UPDATE
+    resource: "org.acme.goldchain.Deed"
+    transaction: "org.acme.goldchain.UpdateOffer"
+    action: ALLOW
+}*/
+
+rule UserSubmitGoldVerificationRequestTx {
+    description: "Allow only the user to submit a gold verification request"
+    participant: "org.acme.goldchain.RegisteredUser"
+    operation: CREATE
+    resource: "org.acme.goldchain.UserSubmitGoldVerificationRequest"
+    action: ALLOW
+}
+
+rule UserSubmitDeedRedemptionRequestTx {
+    description: "Allow only the user to submit a deed redemption request"
+    participant: "org.acme.goldchain.RegisteredUser"
+    operation: CREATE
+    resource: "org.acme.goldchain.UserSubmitDeedRedemptionRequest"
+    action: ALLOW
+}
+
+// ************************
+
+
+/* rule EverybodyCanReadEverything {
+    description: "Allow all participants read access to all resources"
+    participant: "org.acme.goldchain.*"
+    operation: READ
+    resource: "org.acme.goldchain.*"
+    action: ALLOW
+}
+
+rule EverybodyCanSubmitTransactions {
+    description: "Allow all participants to submit transactions"
+    participant: "org.acme.goldchain.*"
+    operation: CREATE
+    resource: "org.acme.goldchain.*"
+    action: ALLOW
+}
+
+rule OwnerHasFullAccessToTheirAssets {
+    description: "Allow all participants full access to their assets"
+    participant(p): "org.acme.goldchain.*"
+    operation: ALL
+    resource(r): "org.acme.goldchain.*"
+    condition: (r.owner.getIdentifier() === p.getIdentifier())
+    action: ALLOW
+} */
+
+rule SystemACL {
+    description: "System ACL to permit all access"
+    participant: "org.hyperledger.composer.system.Participant"
+    operation: ALL
+    resource: "org.hyperledger.composer.system.**"
+    action: ALLOW
+}
+
+rule NetworkAdminUser {
+    description: "Grant business network administrators full access to user resources"
+    participant: "org.hyperledger.composer.system.NetworkAdmin"
+    operation: ALL
+    resource: "**"
+    action: ALLOW
+}
+
+rule NetworkAdminSystem {
+    description: "Grant business network administrators full access to system resources"
+    participant: "org.hyperledger.composer.system.NetworkAdmin"
+    operation: ALL
+    resource: "org.hyperledger.composer.system.**"
+    action: ALLOW
+}
