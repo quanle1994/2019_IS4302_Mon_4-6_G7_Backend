@@ -1,18 +1,25 @@
 namespace org.acme.goldchain
 // ****** Participants ******
-// Certificate Authority approve/reject miner gold sale request
-transaction CAGoldSaleRequest {
+
+asset GoldSaleRequest identified by requestId {
+  o String requestId
   --> Gold gold
   --> Miner minerId
   o Double goldWeight
   o Double goldPurity optional
   o VerificationState verificationState
+}
+
+// Certificate Authority approve/reject miner gold sale request
+transaction CAGoldSaleRequest {
+  --> GoldSaleRequest goldSaleRequest
   //o VerificationState verificationState
 }
 
 // Miner sell gold to CA
 transaction MinerSellGoldToCA {
   -->Gold oldGold
+  -->GoldSaleRequest request
   o String newGoldId
   o Double newGoldWeight
   o Double newGoldPurity optional

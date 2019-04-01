@@ -1,10 +1,8 @@
-import {getCaById, getDeedById, getGoldById, getMinerById, getUserById} from "../composer/api";
-
-require('dotenv').load();
+import {getCaById, getDeedById, getMinerById, getUserById} from "../composer/api";
 import jwt from 'jsonwebtoken';
 import {getDetailsOfDeed, getDetailsOfGold} from "../controllers/userController";
-const crypto = require('crypto');
-const hash = (pwd) => crypto.createHash('sha256').update(pwd).digest('base64');
+import {hash} from "./commons";
+require('dotenv').load();
 
 const verifyPassword = async (req, res, next) => {
   const {username, password} = req.body;
@@ -129,5 +127,4 @@ module.exports = {
   verifyToken,
   verifyGold,
   verifyDeed,
-  hash,
 };

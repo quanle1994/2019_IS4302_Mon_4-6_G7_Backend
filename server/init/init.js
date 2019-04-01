@@ -1,5 +1,5 @@
-import { hash } from '../middleware/authenticate';
 import { api } from '../composer/api';
+import {hash} from "../middleware/commons";
 
 const uuid4 = require('uuid4');
 const password = (id) => hash(`${id}-password`);
@@ -22,15 +22,15 @@ const createUser = (data) => api
     JSON.parse(JSON.stringify(data)),
   );
 
-const createGold = (data) => api
-  .post(
-    '/org.acme.goldchain.CreateGold',
-    JSON.parse(JSON.stringify(data)),
-  );
-
 const minerCreateGold = (data) => api
   .post(
     '/org.acme.goldchain.MinerCreateGold',
+    JSON.parse(JSON.stringify(data)),
+  );
+
+const goldSaleRequest = (data) => api
+  .post(
+    '/org.acme.goldchain.GoldSaleRequest',
     JSON.parse(JSON.stringify(data)),
   );
 
@@ -164,25 +164,31 @@ const cgd2 = {
   "miner": `resource:org.acme.goldchain.Miner#${minerId}`,
 };
 
+const reqId1 = uuid4();
+const reqId2 = uuid4();
+
 const cgr1 = {
-  "$class": "org.acme.goldchain.CAGoldSaleRequest",
+  "$class": "org.acme.goldchain.GoldSaleRequest",
+  "requestId": reqId1,
   "gold": `resource:org.acme.goldchain.Gold#${gold1Id}`,
   "minerId": `resource:org.acme.goldchain.Miner#${minerId}`,
   "goldWeight": 900,
-  "verificationState": "APPROVED",
+  "verificationState": "PENDING",
 };
 
 const cgr2 = {
-  "$class": "org.acme.goldchain.CAGoldSaleRequest",
+  "$class": "org.acme.goldchain.GoldSaleRequest",
+  "requestId": reqId2,
   "gold": `resource:org.acme.goldchain.Gold#${gold2Id}`,
   "minerId": `resource:org.acme.goldchain.Miner#${minerId}`,
   "goldWeight": 800,
-  "verificationState": "APPROVED",
+  "verificationState": "PENDING",
 };
 
 const msg1 = {
   "$class": "org.acme.goldchain.MinerSellGoldToCA",
   "oldGold": gold1Id,
+  "request": reqId1,
   "newGoldId": newGold1,
   "newGoldWeight": 900,
   "ca": `resource:org.acme.goldchain.CertificateAuthority#${pohengId}`,
@@ -192,6 +198,7 @@ const msg1 = {
 const msg2 = {
   "$class": "org.acme.goldchain.MinerSellGoldToCA",
   "oldGold": gold2Id,
+  "request": reqId2,
   "newGoldId": newGold2,
   "newGoldWeight": 800,
   "ca": `resource:org.acme.goldchain.CertificateAuthority#${pohengId}`,
@@ -275,8 +282,17 @@ const execute = async () => {
     await minerCreateGold(cgd1);
     await minerCreateGold(cgd2);
 
-    await CAGoldSaleRequest(cgr1);
-    await CAGoldSaleRequest(cgr2);
+    await goldSaleRequest(cgr1);
+    await goldSaleRequest(cgr2);
+
+    await CAGoldSaleRequest({
+      "$class": "org.acme.goldchain.CAGoldSaleRequest",
+      goldSaleRequest: reqId1
+    });
+    await CAGoldSaleRequest({
+      "$class": "org.acme.goldchain.CAGoldSaleRequest",
+      goldSaleRequest: reqId1
+    });
 
     await minerSellGoldToCA(msg1);
     await minerSellGoldToCA(msg2);

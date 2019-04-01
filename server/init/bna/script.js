@@ -1,4 +1,104 @@
 /**
+ * Accept Offer
+ * @param {org.acme.goldchain.AcceptOffer} txn - the deed
+ * @transaction
+ */
+async function AcceptOffer(txn) {  // eslint-disable-line no-unused-vars
+  const deed = txn.deedToBuy;
+  const state = deed.listingState;
+  const weightToSell = deed.weightListed;
+  const weight = deed.goldWeight;
+  const isSellWholeDeed = (weightToSell == weight)
+  const newDeedId = txn.newDeedId;
+  const factory = getFactory();
+  const newDeed = factory.newResource('org.acme.goldchain','Deed',newDeedId);
+  const deedRegistry = await getAssetRegistry('org.acme.goldchain.Deed');
+  const userRegistry = await getParticipantRegistry('org.acme.goldchain.RegisteredUser');
+  const caRegistry = await getParticipantRegistry('org.acme.goldchain.CertificateAuthority');
+  const deedOfferRegistry = await getAssetRegistry('org.acme.goldchain.DeedOffer');
+  const list = await caRegistry.getAll();
+
+  if (!deed.offers || deed.offers.length == 0) {
+    throw new Error('No offers');
+  }
+
+  let indexOfOffer=-1;
+  for(let i=0; i<txn.deedToBuy.offers.length; i++){
+    if(deed.offers[i].transactionId == txn.offerTxId){
+      //throw new Error('match');
+      indexOfOffer=i;
+      break;
+    }
+  }
+  if(indexOfOffer ==-1){
+    throw new Error('Transaction ID not found');
+  }
+
+  if (state == 'FOR_1TO1_SALE') {
+    const offer = deed.offers[indexOfOffer]
+    const seller = deed.currentOwner
+    const buyer = offer.buyerId
+    const price = offer.deedOffer.offerPrice
+    var isCA = false;
+    for (var ca of list) {
+      if (ca.getFullyQualifiedIdentifier() == seller.getFullyQualifiedIdentifier()) {
+        isCA = true;
+      }
+    }
+    seller.cash += price;
+    buyer.cash -= price;
+    for (let i = 0; i<deed.offers.length; i++) {
+      deed.offers[i].deedOffer.status = i === indexOfOffer ? 'APPROVED' : 'REJECTED';
+      await deedOfferRegistry.update(deed.offers[i].deedOffer);
+    }
+
+    deed.offers = null;
+    deed.listingState = 'NOT_LISTED';
+    if (isSellWholeDeed) {
+      deed.currentOwner = buyer;
+      let i;
+      for (i=0; i < seller.deedOwned.length; i++) {
+        if (seller.deedOwned[i].deedId === deed.deedId) {
+          seller.deedOwned.splice(i, 1);                    // only trf the deed
+        }
+      }
+      if(!buyer.deedOwned){
+        buyer.deedOwned=[];//Init array
+      }
+      buyer.deedOwned.push(deed);
+      await deedRegistry.update(deed);
+      await userRegistry.update(buyer);
+      if (isCA) {
+        await caRegistry.update(seller);
+      } else {
+        await userRegistry.update(seller);
+      }
+    } else {
+      deed.weightListed = 0;
+      deed.listingState = 'NOT_LISTED';
+      deed.goldWeight = weight - weightToSell;
+      newDeed.currentOwner = buyer;
+      newDeed.goldWeight = weightToSell;
+      newDeed.gold = deed.gold;
+      newDeed.listingState = 'NOT_LISTED';
+      if(!buyer.deedOwned){
+        buyer.deedOwned=[];//Init array
+      }
+      buyer.deedOwned.push(newDeed);
+      deed.offers = null;
+      deed.weightListed = 0;
+      await deedRegistry.update(deed);
+      await userRegistry.update(buyer);
+      await deedRegistry.add(newDeed);
+    }
+  } else {
+    throw new Error('Only for 1-1 txn');
+  }
+}
+
+
+
+/**
  * Miner Sells Gold to CA
  * @param {org.acme.goldchain.Delist} listing - the offer
  * @transaction
@@ -15,8 +115,16 @@ async function Delist(listing) {
   if (!allowedToDelete) {
     throw new Error('You cannot delist this.');
   }
-  let deedReg = await getAssetRegistry('org.acme.goldchain.Deed');
-  deed.offers = null;
+  const deedReg = await getAssetRegistry('org.acme.goldchain.Deed');
+  if (deed.offers !== undefined) {
+    const deedOfferReg = await getAssetRegistry('org.acme.goldchain.DeedOffer');
+    for (let i = 0; i<deed.offers.length; i++) {
+      const o = deed.offers[i];
+      o.deedOffer.status = 'REJECTED';
+      await deedOfferReg.update(o.deedOffer);
+    }
+    deed.offers = null;
+  }
   deed.listingState = 'NOT_LISTED';
   deed.weightListed = 0;
   await deedReg.update(deed);
@@ -30,10 +138,9 @@ async function Delist(listing) {
 async function MinerSellGoldToCA(goldParam) {
   const id = goldParam.newGoldId;
   const newWeight = goldParam.newGoldWeight;
-  const newGoldPurity = goldParam.newGoldPurity;
   const miner = goldParam.miner;
   const ca = goldParam.ca;
-  var factory = getFactory();
+  const factory = getFactory();
   let minerRegistry = await getParticipantRegistry('org.acme.goldchain.Miner');
   let minerExist = await minerRegistry.get(miner.getIdentifier());
   if (minerExist === undefined) {
@@ -73,7 +180,11 @@ async function MinerSellGoldToCA(goldParam) {
         miner.goldOwned.splice(g, 1);
         //update participant registry
         // Get the certificate authority participant registry.
-        let participantRegistry = await getParticipantRegistry('org.acme.goldchain.CertificateAuthority');
+        const participantRegistry = await getParticipantRegistry('org.acme.goldchain.CertificateAuthority');
+        const goldSaleReqReg = await getAssetRegistry('org.acme.goldchain.GoldSaleRequest');
+        const goldSaleReq = await goldSaleReqReg.get(goldParam.request);
+        goldSaleReq.verificationState = 'APPROVED';
+        await goldSaleReqReg.update(goldSaleReq);
         await participantRegistry.update(ca);
         await minerRegistry.update(miner);
       }
@@ -115,6 +226,10 @@ async function MinerSellGoldToCA(goldParam) {
     await ca.goldOwned.push(gold);
     await participantRegistry.update(ca);
     await minerRegistry.update(miner);
+    const goldSaleReqReg = await getAssetRegistry('org.acme.goldchain.GoldSaleRequest');
+    const goldSaleReq = await goldSaleReqReg.get(goldParam.request);
+    goldSaleReq.verificationState = 'APPROVED';
+    await goldSaleReqReg.update(goldSaleReq);
   }
 
 }
@@ -717,9 +832,6 @@ async function Offer(offer) {  // eslint-disable-line no-unused-vars
       }
     }
     listing.offers.push(offer);//add back with latest offer
-    let deedOfferRegistry = await getAssetRegistry("org.acme.goldchain.DeedOffer");
-    const newOffer = getFactory().newResource('org.acme.goldchain','DeedOffer', offer.deedOffer.offerId);
-    await deedOfferRegistry.add(newOffer);
   }else{
     throw new Error('Listing is not FOR SALE');
   }
@@ -796,102 +908,29 @@ async function ListDeedForSale(offer) {  // eslint-disable-line no-unused-vars
   await deedRegistry.update(deed);
 }
 
-/**
- * Accept Offer
- * @param {org.acme.goldchain.AcceptOffer} txn - the deed
- * @transaction
- */
-async function AcceptOffer(txn) {  // eslint-disable-line no-unused-vars
-  const deed = txn.deedToBuy;
-  const state = deed.listingState;
-  const weightToSell = deed.weightListed;
-  const weight = deed.goldWeight;
-  const isSellWholeDeed = (weightToSell == weight)
-  const newDeedId = txn.newDeedId;
-  const factory = getFactory();
-  const newDeed = factory.newResource('org.acme.goldchain','Deed',newDeedId);
-  const deedRegistry = await getAssetRegistry('org.acme.goldchain.Deed');
-  const userRegistry = await getParticipantRegistry('org.acme.goldchain.RegisteredUser');
-  const caRegistry = await getParticipantRegistry('org.acme.goldchain.CertificateAuthority');
-  const deedOfferRegistry = await getAssetRegistry('org.acme.goldchain.DeedOffer');
-  const list = await caRegistry.getAll();
 
-  if (!deed.offers || deed.offers.length == 0) {
-    throw new Error('No offers');
-  }
 
-  let indexOfOffer=-1;
-  for(let i=0; i<txn.deedToBuy.offers.length; i++){
-    if(deed.offers[i].transactionId == txn.offerTxId){
-      //throw new Error('match');
-      indexOfOffer=i;
-      break;
-    }
-  }
-  if(indexOfOffer ==-1){
-    throw new Error('Transaction ID not found');
-  }
 
-  if (state == 'FOR_1TO1_SALE') {
-    const offer = deed.offers[indexOfOffer]
-    const seller = deed.currentOwner
-    const buyer = offer.buyerId
-    const price = offer.deedOffer.offerPrice
-    var isCA = false;
-    for (var ca of list) {
-      if (ca.getFullyQualifiedIdentifier() == seller.getFullyQualifiedIdentifier()) {
-        isCA = true;
-      }
-    }
-    seller.cash += price;
-    buyer.cash -= price;
-    deed.offers.forEach(function (item, index) {
-      item.deedOffer.status = index === indexOfOffer ? 'ACCEPTED' : 'REJECTED';
-      deedOfferRegistry.update(item.deedOffer);
-    });
-    deed.offers = null;
-    deed.listingState = 'NOT_LISTED';
-    if (isSellWholeDeed) {
-      deed.currentOwner = buyer;
-      let i;
-      for (i=0; i < seller.deedOwned.length; i++) {
-        if (seller.deedOwned[i].deedId === deed.deedId) {
-          seller.deedOwned.splice(i, 1);                    // only trf the deed
-        }
-      }
-      if(!buyer.deedOwned){
-        buyer.deedOwned=[];//Init array
-      }
-      buyer.deedOwned.push(deed);
-      await deedRegistry.update(deed);
-      await userRegistry.update(buyer);
-      if (isCA) {
-        await caRegistry.update(seller);
-      } else {
-        await userRegistry.update(seller);
-      }
-    } else {
-      deed.weightListed = 0;
-      deed.listingState = 'NOT_LISTED';
-      deed.goldWeight = weight - weightToSell;
-      newDeed.currentOwner = buyer;
-      newDeed.goldWeight = weightToSell;
-      newDeed.gold = deed.gold;
-      newDeed.listingState = 'NOT_LISTED';
-      if(!buyer.deedOwned){
-        buyer.deedOwned=[];//Init array
-      }
-      buyer.deedOwned.push(newDeed);
-      deed.offers = null;
-      deed.weightListed = 0;
-      await deedRegistry.update(deed);
-      await userRegistry.update(buyer);
-      await deedRegistry.add(newDeed);
-    }
-  } else {
-    throw new Error('Only for 1-1 txn');
-  }
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /**
  * Update an Offer for a Listed Deed

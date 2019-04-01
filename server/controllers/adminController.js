@@ -1,4 +1,5 @@
-import {getAllCas, getAllMiners, getAllRUsers} from "../composer/api";
+import {getAllCas, getAllMiners, getAllRUsers, getUserById} from "../composer/api";
+import {hash} from "../middleware/commons";
 
 const getAllUsers = async (req, res) => {
   const { user } = req;
@@ -39,7 +40,28 @@ const getAllUsersRequest = async (req, res) => {
   }
 };
 
+const setStatusRequest = async (req, res) => {
+  try {
+    const { user, body } = req;
+    if (user.type !== 'ADMIN') return res.status(401).send({message: 'You are not an Admin'});
+    const { userId, status } = body;
+    const rUser = await getUserById(userId);
+    const data = {
+      "$class": "org.acme.goldchain.RegisteredUser",
+      "userId": rUser.userId,
+      "email": rUser.email,
+      "name": rUser.name,
+      "password": rUser.password,
+      "status": status,
+    };
+  } catch (e) {
+    console.log(e.response.data.error);
+    return res.status(500).send({message: 'Failed to get miners'});
+  }
+};
+
 export {
   getAllUsers,
   getAllUsersRequest,
+  setStatusRequest,
 }

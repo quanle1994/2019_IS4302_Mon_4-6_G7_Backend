@@ -8,6 +8,15 @@ rule Delist {
     action: ALLOW
 }
 
+rule DelistAllowAll {
+    description: "Allow the certificate authority to update Deed via the AcceptOffer tx for accepting an offer"
+    participant: "org.acme.goldchain.CertificateAuthority", "org.acme.goldchain.RegisteredUser"
+    operation: ALL
+    resource: "org.acme.goldchain.*"
+    transaction: "org.acme.goldchain.Delist"
+    action: ALLOW
+}
+
 // ****** All ******
 
 rule ReadListing {

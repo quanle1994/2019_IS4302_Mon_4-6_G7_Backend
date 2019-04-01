@@ -11,6 +11,11 @@ import {
   convertGoldToDeed,
   increaseCashRequest,
   minerCreateGoldRequest,
+  registerUserRequest,
+  updateUserRequest,
+  updatePasswordRequest,
+  getMinerWithGoldRequest,
+  goldSaleRequest,
 } from '../controllers/userController';
 import {
   verifyDeed,
@@ -60,6 +65,21 @@ userRouter.route('/increaseCash')
 
 userRouter.route('/minerCreateGoldRequest')
   .post(verifyToken, minerCreateGoldRequest);
+
+userRouter.route('/register')
+  .post(registerUserRequest);
+
+userRouter.route('/updateDetails')
+  .post(verifyToken, updateUserRequest);
+
+userRouter.route('/updatePassword')
+  .post(verifyToken, updatePasswordRequest);
+
+userRouter.route('/getMinerWithGold/:minerId')
+  .get(verifyToken, getMinerWithGoldRequest);
+
+userRouter.route('/buyGoldRequest')
+  .post(verifyToken, goldSaleRequest);
 
 module.exports = {
   userRouter

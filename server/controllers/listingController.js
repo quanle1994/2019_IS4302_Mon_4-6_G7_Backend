@@ -43,6 +43,7 @@ const acceptOfferRequest = async (req, res) => {
       deedToBuy: deed.deedId,
       offerTxId: tx,
       newDeedId: uuid4(),
+      accepterId: user.username,
     });
     return res.status(200).send({message: 'SUCCESS'});
   } catch (e) {

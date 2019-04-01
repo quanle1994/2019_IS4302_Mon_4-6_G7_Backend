@@ -127,6 +127,42 @@ const minerCreateGold = (data) => api
     JSON.parse(JSON.stringify(data)),
   );
 
+const createUser = (data) => api
+  .post(
+    'org.acme.goldchain.RegisteredUser',
+    JSON.parse(JSON.stringify(data)),
+  );
+
+const updateUser = (data) => api
+  .put(
+    'org.acme.goldchain.RegisteredUser',
+    JSON.parse(JSON.stringify(data)),
+  );
+
+const updatePassword = (data) => api
+  .put(
+    'org.acme.goldchain.RegisteredUser',
+    JSON.parse(JSON.stringify(data)),
+  );
+
+const setStatus = (data) => api
+  .put(
+    'org.acme.goldchain.RegisteredUser',
+    JSON.parse(JSON.stringify(data)),
+  );
+
+const goldSale = (data) => api
+  .post(
+    'org.acme.goldchain.GoldSaleRequest',
+    JSON.parse(JSON.stringify(data)),
+  );
+
+const caGoldSale = (data) => api
+  .post(
+    'org.acme.goldchain.CAGoldSaleRequest',
+    JSON.parse(JSON.stringify(data)),
+  );
+
 module.exports = {
   api,
   createMiner,
@@ -155,4 +191,10 @@ module.exports = {
   delist,
   increaseCash,
   minerCreateGold,
+  createUser,
+  updateUser,
+  updatePassword,
+  setStatus,
+  caGoldSale,
+  goldSale,
 };

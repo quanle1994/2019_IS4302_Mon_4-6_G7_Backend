@@ -1,18 +1,19 @@
 import * as jwt from "jsonwebtoken";
 import {
-  api,
+  api, caGoldSale,
   createDeed, createDeedCa, createDeedOffer,
-  createGold,
+  createGold, createUser,
   getAllCas,
   getAllDeedGolds,
   getAllMiners,
   getAllOffers,
   getCaById,
   getDeedById, getDeedOfferById,
-  getGoldById, getMinerById, getUserById, increaseCash,
+  getGoldById, getMinerById, getUserById, goldSale, increaseCash,
   listDeed, minerCreateGold,
-  offer,
+  offer, updatePassword, updateUser,
 } from '../composer/api';
+import {hash} from "../middleware/commons";
 
 const uuid4 = require('uuid4');
 
@@ -129,6 +130,7 @@ const getDetailsOfMiner = async (id) => {
     console.log(e.response.data.error);
     return undefined;
   });
+  if (res === undefined) return undefined;
   let ca = res.data;
   delete ca.password;
   delete ca.deedOwned;
@@ -136,10 +138,37 @@ const getDetailsOfMiner = async (id) => {
   return ca;
 };
 
-const getDetailsOfGold = async (id) => {
-  const res = await getGoldById(id).catch(e => {
+const getMinerWithGold = async (id) => {
+  const res = await getMinerById(id).catch(e => {
     console.log(e.response.data.error);
     return undefined;
+  });
+  if (res === undefined) return undefined;
+  let miner = res.data;
+  try {
+    if (miner.goldOwned === undefined) return miner;
+    for (let i = 0; i<miner.goldOwned.length; i++) {
+      const gold = miner.goldOwned[i];
+      const r = await getDetailsOfGold(gold.split('#')[1]);
+      miner.goldOwned[i] = r;
+    }
+    return miner;
+  } catch(e) {
+    console.log(e);
+    return undefined;
+  }
+};
+
+const getMinerWithGoldRequest = async (req, res) => {
+  if (req.user.type !== 'CertificateAuthority') return res.status(401).send({message: 'You must be a Certificate Authority to view this'});
+  const miner = await getMinerWithGold(req.params.minerId);
+  return res.status(200).send(miner);
+};
+
+const getDetailsOfGold = async (id) => {
+  const res = await getGoldById(id).catch(e => {
+    console.log(e);
+    return {};
   });
   const gold = res.data;
   if (gold.verifiedBy !== undefined) {
@@ -168,8 +197,6 @@ const createDeedCaRequest = async (req, res) => {
     "goldWeight": weight,
     "listingState": "NOT_LISTED",
     "user": caId,
-    // title,
-    // price,
     "gold": gold.goldId,
   };
   try {
@@ -252,6 +279,9 @@ const getMyOffers = async (req, res) => {
         delete r3.data.goldOwned;
         o.buyer = r3.data;
         o.deedOffer = r2.data;
+        let r5 = await getCaById(o.deedOffer.owner).catch(() => undefined);
+        if (r5 === undefined) r5 = await getUserById(o.deedOffer.owner).catch(() => undefined);
+        if (r5 !== undefined) o.deedOffer.owner = r5.data;
         return o;
 
       } catch (e) {
@@ -261,7 +291,7 @@ const getMyOffers = async (req, res) => {
     });
     return await Promise.all(p).then(async offers => {
       if (userId !== undefined) {
-        return res.status(200).send(offers.filter(o => o.deedToBuy.currentOwner.userId === userId));
+        return res.status(200).send(offers.filter(o => o.deedOffer.owner.userId === userId));
       }
       return res.status(200).send(offers.filter(o => o.buyer.userId === user.username));
     });
@@ -386,6 +416,100 @@ const generateAuthToken = async function (user) {
   return jwt.sign({access, uid}, process.env.NODE_SECRET);
 };
 
+const registerUserRequest = async (req, res) => {
+  try {
+    const { userId, email, name, password } = req.body;
+    const p = hash(`${userId}-${password}`);
+    const u = await getUserById(userId).catch(() => undefined);
+    if (u !== undefined) {
+      return res.status(401).send({message: 'User exists before'});
+    }
+    const data = {
+      "$class": "org.acme.goldchain.RegisteredUser",
+      "userId": userId,
+      "email": email,
+      "name": name,
+      "password": p,
+      "status": "PENDING_APPROVAL",
+    };
+    await createUser(data);
+    return res.status(200).send({message: 'SUCCESS'});
+  } catch (e) {
+    console.log(e);
+    return res.status(500).send({message: 'Failed to register user'});
+  }
+};
+
+const updateUserRequest = async (req, res) => {
+  try {
+    const { user, body } = req;
+    const { email, name } = body;
+    const data = {
+      "$class": "org.acme.goldchain.RegisteredUser",
+      "userId": user.userId,
+      "email": email,
+      "name": name,
+      "password": user.password,
+      "status": user.status,
+    };
+    await updateUser(data);
+    return res.status(200).send({message: 'SUCCESS'});
+  } catch (e) {
+    console.log(e);
+    return res.status(500).send({message: 'Failed to update user'});
+  }
+};
+
+const updatePasswordRequest = async (req, res) => {
+  try {
+    const { user, body } = req;
+    const { oldPw, newPw } = body;
+    const o = hash(`${user.userId}-${oldPw}`);
+    if (o !== user.password) {
+      return res.status(401).send({message: 'Old password is not correct'});
+    }
+    const data = {
+      "$class": "org.acme.goldchain.RegisteredUser",
+      "userId": user.userId,
+      "email": user.email,
+      "name": user.name,
+      "password": hash(`${user.userId}-${newPw}`),
+      "status": user.status,
+    };
+    await updatePassword(data);
+    return res.status(200).send({message: 'SUCCESS'});
+  } catch (e) {
+    console.log(e);
+    return res.status(500).send({message: 'Failed to update user'});
+  }
+};
+
+const goldSaleRequest = async (req, res) => {
+  const { user, body } = req;
+  if (user.type !== 'CertificateAuthority') return res.status(401).send({message: 'You are not a Certificate Authority to place this order'});
+  const { gold, minerId, goldWeight } = body;
+  let requestId = uuid4();
+  const data = {
+    "$class": "org.acme.goldchain.GoldSaleRequest",
+    requestId,
+    "gold": `resource:org.acme.goldchain.Gold#${gold}`,
+    "minerId": `resource:org.acme.goldchain.Miner#${minerId}`,
+    "goldWeight": goldWeight,
+    "verificationState": "PENDING",
+  };
+  try {
+    await goldSale(data);
+    await caGoldSale({
+      "$class": "org.acme.goldchain.CAGoldSaleRequest",
+      goldSaleRequest: requestId,
+    });
+    return res.status(200).send({message: 'SUCCESS'});
+  } catch (e) {
+    console.log(e.response.data.error);
+    return res.status(500).send({message: 'Cannot request for gold'})
+  }
+};
+
 module.exports = {
   signUpUser,
   signInUser,
@@ -401,4 +525,9 @@ module.exports = {
   getMyOffers,
   increaseCashRequest,
   minerCreateGoldRequest,
+  registerUserRequest,
+  updateUserRequest,
+  updatePasswordRequest,
+  getMinerWithGoldRequest,
+  goldSaleRequest,
 };
