@@ -5,8 +5,10 @@ asset GoldSaleRequest identified by requestId {
   o String requestId
   --> Gold gold
   --> Miner minerId
+  --> CertificateAuthority ca
   o Double goldWeight
-  o Double goldPurity optional
+  o Double goldPurity
+  o Double price
   o VerificationState verificationState
 }
 
@@ -33,6 +35,7 @@ transaction MinerCreateGold {
   o String goldId
   o Double goldWeight
   o Double goldPurity
+  o Double price
   --> Miner miner
   // --> CertificateAuthority ca
 }
@@ -40,6 +43,7 @@ transaction MinerCreateGold {
 abstract participant User identified by userId {
   o String userId
   o String email
+  o String address
   o String name
   o String password
   o Double cash default = 0.0
@@ -74,6 +78,7 @@ asset Gold identified by goldId {
   o String goldId
   o Double goldWeight
   o Double goldPurity
+  o Double price
   o String[] photoDirs optional
   --> CertificateAuthority verifiedBy optional
   --> Miner miner optional
@@ -84,6 +89,7 @@ transaction CreateGold {
   o String goldId
   o Double goldWeight
   o Double goldPurity
+  o Double price
   o String caId
   o String minerId optional
   o String[] photoDirs optional

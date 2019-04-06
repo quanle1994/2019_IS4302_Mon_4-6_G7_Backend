@@ -65,8 +65,10 @@ const miner = {
   "userId": minerId,
   "email": "miner_le@gmail.com",
   "name": "Miner Le",
+  "cash": 5000000,
   "password": password(minerId),
-  "status": 'ACTIVE'
+  "status": 'ACTIVE',
+  "address": "35 Prince George's Park Residences"
 };
 
 const miner2 = {
@@ -74,8 +76,10 @@ const miner2 = {
   "userId": "miner2",
   "email": "miner_tan@gmail.com",
   "name": "Miner Tan",
+  "cash": 4000000,
   "password": password("miner2"),
-  "status": 'ACTIVE'
+  "status": 'ACTIVE',
+  "address": "34 Prince George's Park Residences"
 };
 
 const miner3 = {
@@ -83,8 +87,10 @@ const miner3 = {
   "userId": "miner3",
   "email": "miner_lam@gmail.com",
   "name": "Miner Lam",
+  "cash": 3000000,
   "password": password("miner3"),
-  "status": 'ACTIVE'
+  "status": 'ACTIVE',
+  "address": "33 Prince George's Park Residences"
 };
 
 const pohengId = 'ca1';
@@ -94,8 +100,10 @@ const poheng = {
   "userId": pohengId,
   "email": "poheng@gmail.com",
   "name": "Po Heng Shop",
+  "cash": 15000000,
   "password": password(pohengId),
-  "status": 'ACTIVE'
+  "status": 'ACTIVE',
+  "address": "32 Prince George's Park Residences"
 };
 
 const ca2 = {
@@ -103,8 +111,10 @@ const ca2 = {
   "userId": "ca2",
   "email": "pocui@gmail.com",
   "name": "Po Cui Shop",
+  "cash": 25000000,
   "password": password("ca2"),
-  "status": 'ACTIVE'
+  "status": 'ACTIVE',
+  "address": "31 Prince George's Park Residences"
 };
 
 const ca3 = {
@@ -112,8 +122,10 @@ const ca3 = {
   "userId": "ca3",
   "email": "mama@gmail.com",
   "name": "Mama Shop",
+  "cash": 35000000,
   "password": password("ca3"),
-  "status": 'ACTIVE'
+  "status": 'ACTIVE',
+  "address": "30 Prince George's Park Residences"
 };
 
 const aliceId = 'user1';
@@ -125,7 +137,8 @@ const alice = {
   "email": "alice@gmail.com",
   "name": "Alice Smith",
   "password": password(aliceId),
-  "status": 'ACTIVE'
+  "status": 'ACTIVE',
+  "address": "29 Prince George's Park Residences"
 };
 
 const fatimaId = 'user2';
@@ -137,7 +150,8 @@ const fatima = {
   "email": "fatima@gmail.com",
   "name": "Fatima Sharma",
   "password": password(fatimaId),
-  "status": 'ACTIVE'
+  "status": 'ACTIVE',
+  "address": "28 Prince George's Park Residences"
 };
 
 const gold1Id = uuid4();
@@ -147,6 +161,7 @@ const cgd1 = {
   "goldId": gold1Id,
   "goldWeight": 1000,
   "goldPurity": 99.9,
+  "price": 57.5,
   // "ca": `resource:org.acme.goldchain.CertificateAuthority#${pohengId}`,
   "miner": `resource:org.acme.goldchain.Miner#${minerId}`,
 };
@@ -159,7 +174,8 @@ const cgd2 = {
   "$class": "org.acme.goldchain.MinerCreateGold",
   "goldId": gold2Id,
   "goldWeight": 900,
-  "goldPurity": 99,
+  "goldPurity": 98.7,
+  "price": 58.1,
   // "ca": `resource:org.acme.goldchain.CertificateAuthority#${pohengId}`,
   "miner": `resource:org.acme.goldchain.Miner#${minerId}`,
 };
@@ -172,7 +188,10 @@ const cgr1 = {
   "requestId": reqId1,
   "gold": `resource:org.acme.goldchain.Gold#${gold1Id}`,
   "minerId": `resource:org.acme.goldchain.Miner#${minerId}`,
+  "ca": `resource:org.acme.goldchain.CertificateAuthority#${pohengId}`,
   "goldWeight": 900,
+  "goldPurity": 99.9,
+  "price": 57.5,
   "verificationState": "PENDING",
 };
 
@@ -181,7 +200,10 @@ const cgr2 = {
   "requestId": reqId2,
   "gold": `resource:org.acme.goldchain.Gold#${gold2Id}`,
   "minerId": `resource:org.acme.goldchain.Miner#${minerId}`,
+  "ca": `resource:org.acme.goldchain.CertificateAuthority#${pohengId}`,
   "goldWeight": 800,
+  "goldPurity": 98.7,
+  "price": 58.1,
   "verificationState": "PENDING",
 };
 

@@ -165,6 +165,13 @@ async function MinerSellGoldToCA(goldParam) {
     let exceeded =newWeight-goldParam.oldGold.goldWeight;
     throw new Error('Weight exceeded by: '+ exceeded);
   }
+  const assetRegistry = await getAssetRegistry('org.acme.goldchain.Gold');
+
+  //check if ca has enough cash balance
+  let cost = parseInt(goldParam.oldGold.price * goldParam.newGoldWeight);
+  if (ca.cash < cost)
+    throw new Error('CA does not have sufficient cash to make this purchase');
+
   if(newWeight==goldParam.oldGold.goldWeight){
     //transfer as whole
     //for(let g of miner.goldOwned){
@@ -175,14 +182,21 @@ async function MinerSellGoldToCA(goldParam) {
         if(!ca.goldOwned){
           ca.goldOwned=[];
         }
+        g.verifiedBy = ca;
+        await assetRegistry.update(g);
         ca.goldOwned.push(miner.goldOwned[g]);
+        ca.cash -= cost;
+        await participantRegistry.update(ca);
         // remove from miner
         miner.goldOwned.splice(g, 1);
+        miner.cash += cost;
+        await minerRegistry.update(miner);
         //update participant registry
         // Get the certificate authority participant registry.
         const participantRegistry = await getParticipantRegistry('org.acme.goldchain.CertificateAuthority');
         const goldSaleReqReg = await getAssetRegistry('org.acme.goldchain.GoldSaleRequest');
-        const goldSaleReq = await goldSaleReqReg.get(goldParam.request);
+        // const goldSaleReq = await goldSaleReqReg.get(goldParam.request);
+        const goldSaleReq = goldParam.request;
         goldSaleReq.verificationState = 'APPROVED';
         await goldSaleReqReg.update(goldSaleReq);
         await participantRegistry.update(ca);
@@ -200,7 +214,7 @@ async function MinerSellGoldToCA(goldParam) {
     gold.goldPurity = goldParam.oldGold.goldPurity;
     gold.verifiedBy = ca;
     gold.miner = miner;
-    let assetRegistry = await getAssetRegistry('org.acme.goldchain.Gold');
+    gold.price = goldParam.oldGold.price;
     await assetRegistry.add(gold);
 
     // Get the certificate authority participant registry.
@@ -222,12 +236,16 @@ async function MinerSellGoldToCA(goldParam) {
     if(!ca.goldOwned){
       ca.goldOwned=[];//Init array
     }
-
+    ca.cash -= cost;
+    await participantRegistry.update(ca);
+    miner.cash += cost;
+    await minerRegistry.update(miner);
     await ca.goldOwned.push(gold);
     await participantRegistry.update(ca);
     await minerRegistry.update(miner);
     const goldSaleReqReg = await getAssetRegistry('org.acme.goldchain.GoldSaleRequest');
-    const goldSaleReq = await goldSaleReqReg.get(goldParam.request);
+    // const goldSaleReq = await goldSaleReqReg.get(goldParam.request);
+    const goldSaleReq = goldParam.request;
     goldSaleReq.verificationState = 'APPROVED';
     await goldSaleReqReg.update(goldSaleReq);
   }
@@ -254,19 +272,20 @@ async function goldClaim(goldParam) {
  * @transaction
  */
 async function caGoldSaleRequest(newRequest) {
-  let goldRegistry = await getAssetRegistry('org.acme.goldchain.Gold');
-  let gold = await goldRegistry.get(newRequest.gold.goldId);
-  if(gold.goldWeight<newRequest.goldWeight){
-    let exceeded = newRequest.goldWeight-gold.goldWeight;
-    throw new Error("Gold weight exceeded by: "+exceeded);
+  const goldRegistry = await getAssetRegistry('org.acme.goldchain.Gold');
+  const request = newRequest.goldSaleRequest;
+  let gold = await goldRegistry.get(request.gold.goldId);
+  if(gold.goldWeight<request.goldWeight){
+    let exceeded = request.goldWeight - gold.goldWeight;
+    throw new Error("Gold weight exceeded by: " + exceeded);
   }
 
   //Check if miner owns the gold
   let checker =-1;
-  for(let g=0; g<newRequest.minerId.goldOwned.length;g++){
-    if(newRequest.minerId.goldOwned[g].getFullyQualifiedIdentifier() == newRequest.gold.getFullyQualifiedIdentifier()){
+  for(let g=0; g<request.minerId.goldOwned.length; g++){
+    if(request.minerId.goldOwned[g].getFullyQualifiedIdentifier() == request.gold.getFullyQualifiedIdentifier()){
       checker=1;
-      if(!newRequest.minerId.goldOwned){
+      if(!request.minerId.goldOwned){
         throw new Error('Miner does not own this gold');
       }
     }
@@ -284,7 +303,7 @@ async function caGoldSaleRequest(newRequest) {
 async function MinerCreateGold(goldParam) {
   const id = goldParam.goldId;
   const weight = goldParam.goldWeight;
-  const purity = goldParam.goldWeight;
+  const purity = goldParam.goldPurity;
   const miner = goldParam.miner;
   // const ca = goldParam.ca;
   var factory = getFactory();
@@ -293,12 +312,13 @@ async function MinerCreateGold(goldParam) {
   gold.goldPurity = purity;
   //gold.verifiedBy = ca;
   gold.miner = miner;
+  gold.price = goldParam.price;
   let assetRegistry = await getAssetRegistry('org.acme.goldchain.Gold');
   await assetRegistry.add(gold);
 
   // Get the certificate authority participant registry.
   let participantRegistry = await getParticipantRegistry('org.acme.goldchain.Miner');
-  if(miner.goldOwned === undefined || miner.goldOwned.length == 0){
+  if(miner.goldOwned === undefined || miner.goldOwned.length === 0){
     miner.goldOwned=[];//Init array
   }
 
@@ -317,6 +337,7 @@ async function createGold(newGold) {
   let resource = factory.newResource("org.acme.goldchain", "Gold", newGold.goldId);
   resource.goldWeight = newGold.goldWeight;
   resource.goldPurity = newGold.goldPurity;
+  resource.price = newGold.price;
 
   // Get the certificate authority participant registry.
   let participantRegistry = await getParticipantRegistry('org.acme.goldchain.CertificateAuthority');

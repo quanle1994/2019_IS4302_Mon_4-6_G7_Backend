@@ -1,5 +1,4 @@
 import {
-  signUpUser,
   signInUser,
   getAllAssets,
   createDeedCaRequest,
@@ -15,7 +14,7 @@ import {
   updateUserRequest,
   updatePasswordRequest,
   getMinerWithGoldRequest,
-  goldSaleRequest,
+  goldSaleRequest, getSaleRequest, getMyGoldRequests, minerSellsGold, increaseCashRequestCa,
 } from '../controllers/userController';
 import {
   verifyDeed,
@@ -26,9 +25,6 @@ import {
 import express from 'express';
 
 const userRouter = express.Router();
-
-userRouter.route('/signup')
-  .post(signUpUser);
 
 userRouter.route('/signin')
   .post(verifyPassword, signInUser);
@@ -63,6 +59,9 @@ userRouter.route('/getMyOffers/:userId')
 userRouter.route('/increaseCash')
   .post(verifyToken, increaseCashRequest);
 
+userRouter.route('/increaseCashCa')
+  .post(verifyToken, increaseCashRequestCa);
+
 userRouter.route('/minerCreateGoldRequest')
   .post(verifyToken, minerCreateGoldRequest);
 
@@ -79,7 +78,16 @@ userRouter.route('/getMinerWithGold/:minerId')
   .get(verifyToken, getMinerWithGoldRequest);
 
 userRouter.route('/buyGoldRequest')
-  .post(verifyToken, goldSaleRequest);
+  .post(verifyToken, verifyGold, goldSaleRequest);
+
+userRouter.route('/getGoldRequest')
+  .get(verifyToken, getSaleRequest);
+
+userRouter.route('/getMinerGoldRequests')
+  .get(verifyToken, getMyGoldRequests);
+
+userRouter.route('/minerSellsGold')
+  .post(verifyToken, verifyGold, minerSellsGold);
 
 module.exports = {
   userRouter

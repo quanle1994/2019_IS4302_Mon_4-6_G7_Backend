@@ -25,8 +25,8 @@ const createCA = (p) => api
 const getCaById = (id) => api
   .get(`/org.acme.goldchain.CertificateAuthority/${id}`);
 
-const getUserById = (id) => api
-  .get(`/org.acme.goldchain.RegisteredUser/${id}`);
+const getUserById = (type, id) => api
+  .get(`/org.acme.goldchain.${type}/${id}`);
 
 const getDeedById = (id) => api
   .get(`/org.acme.goldchain.Deed/${id}`);
@@ -121,27 +121,33 @@ const increaseCash = (data) => api
     JSON.parse(JSON.stringify(data)),
   );
 
+const increaseCashCa = (p, id) => api
+  .put(
+    `/org.acme.goldchain.CertificateAuthority/${id}`,
+    JSON.parse(JSON.stringify(p))
+  );
+
 const minerCreateGold = (data) => api
   .post(
     'org.acme.goldchain.MinerCreateGold',
     JSON.parse(JSON.stringify(data)),
   );
 
-const createUser = (data) => api
+const createUser = (data, type) => api
   .post(
-    'org.acme.goldchain.RegisteredUser',
+    `org.acme.goldchain.${type}`,
     JSON.parse(JSON.stringify(data)),
   );
 
-const updateUser = (data) => api
+const updateUser = (data, type, id) => api
   .put(
-    'org.acme.goldchain.RegisteredUser',
+    `org.acme.goldchain.${type}/${id}`,
     JSON.parse(JSON.stringify(data)),
   );
 
-const updatePassword = (data) => api
+const updatePassword = (data, type, id) => api
   .put(
-    'org.acme.goldchain.RegisteredUser',
+    `org.acme.goldchain.${type}/${id}`,
     JSON.parse(JSON.stringify(data)),
   );
 
@@ -160,6 +166,17 @@ const goldSale = (data) => api
 const caGoldSale = (data) => api
   .post(
     'org.acme.goldchain.CAGoldSaleRequest',
+    JSON.parse(JSON.stringify(data)),
+  );
+
+const getGoldSale = () => api
+  .get(
+    'org.acme.goldchain.GoldSaleRequest',
+  );
+
+const minerSellGoldToCA = (data) => api
+  .post(
+    '/org.acme.goldchain.MinerSellGoldToCA',
     JSON.parse(JSON.stringify(data)),
   );
 
@@ -190,6 +207,7 @@ module.exports = {
   acceptOffer,
   delist,
   increaseCash,
+  increaseCashCa,
   minerCreateGold,
   createUser,
   updateUser,
@@ -197,4 +215,6 @@ module.exports = {
   setStatus,
   caGoldSale,
   goldSale,
+  getGoldSale,
+  minerSellGoldToCA,
 };

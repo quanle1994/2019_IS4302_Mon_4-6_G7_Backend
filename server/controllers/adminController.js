@@ -1,5 +1,4 @@
-import {getAllCas, getAllMiners, getAllRUsers, getUserById} from "../composer/api";
-import {hash} from "../middleware/commons";
+import {getAllCas, getAllMiners, getAllRUsers, getUserById, updateUser} from "../composer/api";
 
 const getAllUsers = async (req, res) => {
   const { user } = req;
@@ -44,19 +43,23 @@ const setStatusRequest = async (req, res) => {
   try {
     const { user, body } = req;
     if (user.type !== 'ADMIN') return res.status(401).send({message: 'You are not an Admin'});
-    const { userId, status } = body;
-    const rUser = await getUserById(userId);
+    const { userId, status, type } = body;
+    const r = await getUserById(type, userId);
+    const rUser = r.data;
     const data = {
-      "$class": "org.acme.goldchain.RegisteredUser",
+      "$class": `org.acme.goldchain.${type}`,
       "userId": rUser.userId,
       "email": rUser.email,
       "name": rUser.name,
+      "address": rUser.address,
       "password": rUser.password,
       "status": status,
     };
+    await updateUser(data, type, userId);
+    return res.status(200).send();
   } catch (e) {
     console.log(e.response.data.error);
-    return res.status(500).send({message: 'Failed to get miners'});
+    return res.status(500).send({message: 'Failed to grant permission'});
   }
 };
 

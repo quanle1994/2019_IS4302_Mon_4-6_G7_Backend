@@ -16,6 +16,7 @@ const verifyPassword = async (req, res, next) => {
         username,
         name: admin.name,
         type: 'ADMIN',
+        status: 'ACTIVE',
       };
       return next();
     }
@@ -31,7 +32,7 @@ const verifyPassword = async (req, res, next) => {
         })
           .catch(async err => {
           if (err.response.data.error.statusCode === 404) {
-            await getUserById(username).then(res => {
+            await getUserById('RegisteredUser', username).then(res => {
               returnedUser = res.data;
               type = 'RegisteredUser';
             });
@@ -54,6 +55,10 @@ const verifyPassword = async (req, res, next) => {
       name: returnedUser === undefined ? null : returnedUser.name,
       type: type !== '' ? type : 'UNKNOWN',
       money: returnedUser.cash === undefined ? null : returnedUser.cash,
+      email: returnedUser.email,
+      address: returnedUser.address,
+      password: returnedUser.password,
+      status: returnedUser.status,
     };
     next();
   } catch (e) {
@@ -85,7 +90,6 @@ const verifyToken = async (req, res, next) => {
     if (!uid) {
       return res.status(401).send('Invalid token');
     }
-    // req.user = await User.findByUid(uid);
     req.user = {username: uid, type: access};
     next();
   } catch (e) {
