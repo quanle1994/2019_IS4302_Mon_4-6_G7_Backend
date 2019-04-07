@@ -1,4 +1,4 @@
-# IS4302-GoldChain
+# IS4302-GoldChain-Backend
 Blockchain application on Gold Trading
 
 ## Deployment Secquence
