@@ -26,14 +26,7 @@ const upload = multer({
 app.use(express.static('static'));
 app.use(bodyParser.json());
 // app.use('/hlf', proxy('http://172.31.65.194:3001/'));
-// app.use('/hlf', proxy('http://172.25.105.221:3001/'));
-// app.use('/hlf', proxy('http://172.25.101.84:3001/'));
-// app.use('/hlf', proxy('http://25.56.89.13:3001/'));
-
-app.use('/hlf', proxy('http://25.72.144.150:3002/'));
-// app.use('/hlf', proxy('http://172.25.106.32:3002/'));
-
-// app.use('/hlf', proxy('http://localhost:3001/'));
+app.use('/hlf', proxy('http://localhost:3001/'));
 app.use('/user', userRouter);
 app.use('/admin', adminRouter);
 app.use('/listings', listingRouter);
