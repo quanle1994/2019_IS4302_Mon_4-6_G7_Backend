@@ -16,7 +16,7 @@ Blockchain application on Gold Trading
     - Navigate to the same folder where the Nodejs repo is extracted
     - Run npn run init
 1. Deploy ReactJS Server
-    - Retrieve the repo at this link https://github.com/quanle1994/IS4302-GoldChain-Frontend. Download it onto your computer and unzip it.
+    - Retrieve the repo at this link https://github.com/quanle1994/2019_IS4302_Mon_4-6_G7_Frontend. Download it onto your computer and unzip it.
     - Open the unzipped folder using WebStorm or Visual Studio code
     - In the IDE's terminal, run npm install
     - Run npm start
