@@ -10,6 +10,7 @@ Blockchain application on Gold Trading
 - Navigate to the extracted folder in command prompt (for Windows). For Mac and Linux, use the terminal
 - Run npm install
 - Run npm start
+- The server will be running port 6000
 1. Init Data
 - Navigate to the same folder where the Nodejs repo is extracted
 - Run npn run init
